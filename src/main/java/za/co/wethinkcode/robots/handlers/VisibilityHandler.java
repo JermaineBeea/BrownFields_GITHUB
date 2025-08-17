@@ -2,10 +2,8 @@ package za.co.wethinkcode.robots.handlers;
 
 import org.json.JSONObject;
 
-
 import za.co.wethinkcode.robots.domain.Robot;
 import za.co.wethinkcode.robots.domain.Direction;
-
 import za.co.wethinkcode.robots.server.Obstacle;
 import za.co.wethinkcode.robots.server.ObstacleType;
 import za.co.wethinkcode.robots.server.Response;
@@ -202,29 +200,5 @@ public class VisibilityHandler {
             case EAST -> x >= halfWidth;
             case WEST -> x <= -halfWidth;
         };
-    }
-
-    boolean canRobotMove(Robot robot, CompletionHandler handler) {
-    if (robot == null) {
-        handler.onComplete(new Response("ERROR", "Robot not found."));
-        return false;
-    }
-    
-    if (robot.status == Robot.RobotStatus.Dead) {
-        handler.onComplete(new Response("ERROR", robot.getName() + " is DEAD and cannot move."));
-        return false;
-    }
-    
-    if (robot.status == Robot.RobotStatus.Reload) {
-        handler.onComplete(new Response("ERROR", robot.getName() + " is reloading."));
-        return false;
-    }
-    
-    if (robot.status == Robot.RobotStatus.Repair) {
-        handler.onComplete(new Response("ERROR", robot.getName() + " is repairing."));
-        return false;
-    }
-    
-    return true;
     }
 }

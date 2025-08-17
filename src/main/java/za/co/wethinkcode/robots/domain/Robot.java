@@ -163,16 +163,4 @@ public class Robot {
         return this.status == RobotStatus.Dead;
     }
 
-
-    public void moveInDirection(String direction) {
-    if ("forward".equals(direction)) {
-        moveForward(1);
-    } else {
-        moveBackward(1);
-    }
-    }
-
 }
-
-
-

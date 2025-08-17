@@ -23,9 +23,5 @@ public interface ObstacleDAO extends BaseQuery {
     void deleteObstacle(int id);
 
 
-
-    
-    
-
     
 }

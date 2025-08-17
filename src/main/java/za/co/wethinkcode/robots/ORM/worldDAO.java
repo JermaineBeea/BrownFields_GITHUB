@@ -1,12 +1,13 @@
 package za.co.wethinkcode.robots.orm;
 
-import net.lemnik.eodsql.BaseQuery;
+import org.hibernate.query.sqm.spi.BaseSemanticQueryWalker;
+
 import net.lemnik.eodsql.Select;
 import net.lemnik.eodsql.Update;
+import za.co.wethinkcode.robots.domain.World;
+import za.co.wethinkcode.robots.persistence.POJO.WorldDO;
 
-import java.util.List;
-
-public interface WorldDAO extends BaseQuery {
+public class worldDAO extends BaseQuery {
     @Select("SELECT * FROM worlds WHERE id = ?{1}")
     WorldDO getWorldById(int id);
 

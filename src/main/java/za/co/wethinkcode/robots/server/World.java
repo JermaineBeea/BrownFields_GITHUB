@@ -277,13 +277,7 @@ public class World {
             }
         }
 
-        if(isFull()){
-            return Status.NoSpace;
-        }
-
         Random random = new Random();
-        int maxAttempts = 100;
-        for (int i = 0; i < maxAttempts){
 
         int randomX = random.nextInt((halfWidth * 2) + 1) - halfWidth;
         int randomY = random.nextInt((halfHeight * 2) + 1) - halfHeight;
@@ -294,9 +288,9 @@ public class World {
             this.robots.add(robot);
 
             return Status.OK;
-        }}
+        }
 
-        return Status.NoSpace;
+        return status;
     }
 
     public Robot findRobot(String name) {
@@ -423,9 +417,5 @@ public class World {
 
     private boolean isWithinBounds(int x, int y) {
         return x >= -halfWidth && x <= halfWidth  && y >= -halfHeight && y <= halfHeight;
-    }
-    public boolean isFull(){
-        int maxRobots = (halfWidth * 2 + 1) * (halfHeight * 2 + 1);
-        return robots.size() >=maxRobots;
     }
 }

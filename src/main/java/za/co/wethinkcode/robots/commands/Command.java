@@ -3,7 +3,6 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
 import za.co.wethinkcode.robots.domain.Robot;
-import za.co.wethinkcode.robots.server.Response;
 
 import java.util.Arrays;
 
@@ -148,6 +147,4 @@ public abstract class Command {
     }
 
     public abstract String commandName();
-
-    public abstract Response execute();
 }

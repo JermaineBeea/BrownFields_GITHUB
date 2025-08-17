@@ -1,7 +1,5 @@
 package za.co.wethinkcode.robots.domain;
 
-import java.util.Collection;
-
 /**
  * Represents a 2D coordinate (x, y) in the robot world.
  * Provides basic position data and utilities.
@@ -32,10 +30,5 @@ public class Position {
 
         if (x != position.x) return false;
         return y == position.y;
-    }
-
-    public Collection<?> distanceTo(Position hitPosition) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'distanceTo'");
     }
 }

@@ -143,19 +143,16 @@ class LaunchRobotTests {
             secondResponse.get("data").get("position"),
             "Robots should appear at different positions"
         );
+ 
+
 
     }
 
     @Test
     void launchRobot_WorldWithoutObstaclesIsFull(){
-        int width = 2, height = 2;
-        int capacity = width * height;
+        String[] robotNames = {"HAL", "R2D2", "TERMINATOR", "BOB", "ROBOCOP", "BENDER", "ROM", "CRPO", "ROOMBA"};
 
-        String[] robotNames = {"HAL", "R2D2", "TERMINATOR", "BOB",
-                "ROBOCOP", "BENDER", "ROM", "CRPO", "ROOMBA"};
-
-        for (int i = 0; i < capacity; i++){
-            String name = robotNames[i];
+        for (String name : robotNames){
             String launchCommand = String.format(
                     "{" +
                             "\"robot\": \"%s\"," +
@@ -165,21 +162,22 @@ class LaunchRobotTests {
                     name
 
             );
-
             JsonNode response = serverClient.sendRequest(launchCommand);
-            //System.out.println("Response for " + name + ": " + response.toString());
-            assertEquals("OK", response.get("result").asText(), "launch should succeed for " + name);
+            System.out.println("Response for " + name + ": " + response.toString());
+            assertEquals("OK", response.get("result").asText());
         }
-        String overflowlaunchCommand =  "{" +
+
+        String overflowlaunch =  "{" +
                 "\"robot\": \"Optimus\"," +
                 "\"command\": \"launch\"," +
                 "\"arguments\": [\"Sniper\", \"5\", \"5\"]" +
                 "}";
+        JsonNode errorResponse = serverClient.sendRequest(overflowlaunch);
 
-
-        JsonNode errorResponse = serverClient.sendRequest(overflowlaunchCommand);
         assertEquals("ERROR", errorResponse.get("result").asText());
-        assertEquals("No more space in this world", errorResponse.get("data").get("message").asText()
+        assertEquals(
+                "No more space in this world",
+                errorResponse.get("data").get("message").asText()
         );
 
     }
