@@ -1,0 +1,41 @@
+package za.co.wethinkcode.robots.domain;
+
+import java.util.Collection;
+
+/**
+ * Represents a 2D coordinate (x, y) in the robot world.
+ * Provides basic position data and utilities.
+ */
+public class Position {
+    private final int x;
+    private final int y;
+
+    public Position(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Position position = (Position) o;
+
+        if (x != position.x) return false;
+        return y == position.y;
+    }
+
+    public Collection<?> distanceTo(Position hitPosition) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'distanceTo'");
+    }
+}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jarkarta.ee/xml/ns/persistence"
+                xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="https://jarkarta.ee/xml/ns/persistence https://jarkarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+                version="3.0">
+
+    <persistence-unit name="robotPU">
+        <!-- List your entity classes-->
+        <class>za.co.wethinkcode.robots.persistence.entitites.WorldEntity"</class>
+        <class>za.co.wethinkcode.robots.persistence.entitites.ObstacleEntity"</class>
+
+        <properties>
+            <!-- JDBC -->
+            <property name="jakarta.persistence.jdbc.driver" value="org.sqlite.JDBC"/>
+            <!-- Use the SAME path you use in code. If you want it in the propject root: -->
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:sqlite:robotworld.db"/>
+
+            <property name="hibernate.dialect" value="org.hibernate.community.dialect.SQLiteDialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="validate"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+        </properties>
+    </persistence-unit>
+</persistence>
+
+

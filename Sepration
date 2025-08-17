@@ -1,0 +1,111 @@
+Separation of Concerns
+We use the word concern here to mean "has to do with". Therefore, when we say that we must "separate out the different concerns", it means that we want to keep parts of the code that "has to do with x" independent of code that "has to do with y". For example, we should separate out code that has to do with database access from code that has to do with socket handling.
+
+Separating concerns allows us to evolve different parts of the system while limiting and managing the impacts of those changes on the rest of the system. You have probably felt that pain already — where you make a small change in one class and find yourself making quite a few changes in several other places too! This also helps us manage complexity of the system — a war that never ends.
+
+Architectural Patterns for Separating Concerns
+What is an architectural pattern?
+In a specific context, it is a general, reusable solution that describes the beneficial relationships between parts of a software architecture. It is agnostic of any programming language and technology choices. The implementation of the pattern depends on the language and framework choices for the system.
+
+Some literature makes the distinction between an architectural pattern and an architectural style. This can take us down a long philosophical path. Instead, we will use both as simply the common vocabulary that allows us to communicate clearly whenever we want to describe our architecture.
+
+How do we separate concerns?
+Use an appropriate architectural pattern!
+
+Any time your code is forced to cooperate or depend on some other system, (a library, a remote/networked external system, any form of persistence or configuration), then consider shielding yourself from it. A "system" in this case is anything that is not under your direct control or anything that is not directly concerned with the immediate job of the module, class, or method you’re in.
+
+Always aim to shield your code from changes outside its direct, immediate job by hiding behind a set of methods — an interface or API — that is firmly under your own control. Put all the complexities and details of dealing with that entity behind the interface where it is much less likely to affect your direct concerns.
+
+A few popular patterns
+There are many architectural patterns which are catalogued here. You will also find that many architectural patterns share the same characteristics. This can be confusing but be guided by the basic principle of separating concerns.
+
+Here are a few popular architectural patterns.
+
+Monolithic Application Architecture
+This is a pattern that you have already implemented! Every program that you have written in first year is a monolithic architecture. A monolithic architecture is a single program that contains the logic, the user interface, file and network code. In fact, the server of the RobotWorlds is also a monolithic application. See this for more info.
+
+Client-server Architecture
+You have already implemented this pattern too! The RobotWorld architecture is a client-server architecture with the client code being separated from the server code and communicating over a socket. See this for more info.
+
+Layered Architecture
+Different responsibilities are separated into layers stacked one below the other, and the layers higher up the stack should only call layers below it. The lower layers should not call code in higher layers. We will apply this pattern for the Web API of RobotWorld. See this for more information.
+
+Hexagonal Architecture
+This pattern addresses the implementation shortfalls of a layered architecture. In a layered architecture, we can still have unwanted dependencies between layers, with one layer spilling over into another layer. For example, we can have a layer that should only deal with the user interface, but the user interface code can contaminate the business logic code. The hexagonal architecture pattern addresses this by dividing a system into loosely interchangeable components such as a database component, a core logic component, logging component, user interface and others. This is a complex pattern to implement and is suitable for larger systems being developed by multiple teams too. See this for more information.
+
+Microservices Architecture
+This focuses on separating concerns along the lines of different parts of the overall model of the system. For example, in an online store, the part that deals with managing stock from suppliers is separated from the shopping cart, which is, perhaps, separated from payments. An individual microservice can be implemented using the hexagonal architecture pattern. This patterns deals with large scale systems where complexity of each part is significant. See this for more info.
+
+Unfortunately, all of these architecture patterns can quickly degrade into a monolithic architecture, known as the Big Ball Of Mud pattern, where concerns are not kept cleanly separate. This happens accidentally when adding new features, refactoring, fixing bugs without deliberately thinking about honouring the architecture.
+
+Microservices carry a lot of technical complexity in their implementation, often requiring sophisticated server side software for managing each part at run-time. This pattern is popular but be warned that it can be the exact opposite of what you need. Choose carefully and be even more cautious as you implement it. Implementations of microservice architectures easily degraded into what we call a "distributed monolith"; i.e. a microservice architecture that is so tightly coupled that it actually resembles a monolithic architecture.
+
+Applying the Layered Architecture Pattern
+For the problem described in the RobotWorld specification, a layered architecture is good enough for us to manage the complexity of the solution. It may be tempting to apply one of the more alluring patterns such as the Hexagonal Architecture Pattern but we don’t have that level of complexity in RobotWorlds.
+
+Picking the wrong pattern can lead to more complex code. Therefore, pick the simplest pattern that resolves the pain that you are feeling in your design.
+The Database Layer
+soc architecture1
+In the persistence module, you were asked to use a Repository or Data Access Object pattern. The benefit of using such data access patterns is that it allows us to separate the database access code from the rest of the codebase. This gives us the following benefits.
+
+We can manage the complexity of the database access code independently of the rest of the codebase.
+
+We can change the rest of the codebase with controlled impact on the database access code.
+
+We increase our options for testing the rest of the codebase without concerning ourselves too much about how the database interaction works.
+
+When you look at the architecture, notice that the architecture is shown as a stack of layers. Also, the arrows point from a layer on the top to a layer below it. This means that code in the layer above calls code in the layer below. However, the layer below should not call code in the layer above.
+
+For example, code for a server console command can call database access code to save or restore the objects in a world; but the database access code should never call any code above it such as the world configuration code. So, there must be some other code in the layer above the database code that is responsible for receiving the data back from the database access code and configuring the world accordingly.
+
+Nothing really prevents us from writing code that calls a layer above it, but we should be aware and disciplined to avoid this.
+
+An object should never know who sent it a message. In other words, an object should never care which object called one of its methods. Therefore, we must ensure that code lower down the stack should never depend on the calling code above it.
+
+The next goal for this iteration will require you to make changes to this layer. In so doing, you will experience whether your data access layer is sufficiently separated from the rest of the codebase.
+
+The Infrastructure Layer
+Look at the layers again and pay attention to the big layer in the middle. Notice that it is a mixture of responsibilities about RobotWorld itself and about running a server, handling the RobotWorld protocol and client threads. We can split those out into two layers too.
+
+soc architecture2
+Some literature can be prescriptive about the name of this layer with some calling it the network or transport layer. We don’t think it needs to be prescriptive but do ensure that the name is meaningful.
+We now have a separate layer that is responsible for handling the client/server communications and the protocol.
+
+This layer does not contain any knowledge about how the RobotWorld works.
+
+It does know how to connect and disconnect clients.
+
+It also knows how to handle the protocol by parsing the request, invoking a command in the layer below, getting the result of the command and converting it back to JSON for response.
+
+The Domain Layer
+The layer in the middle is special. We call this layer the domain layer. It knows everything about how RobotWorld works. It knows about the world configuration, robots, moving, rules for looking, mines, pits and everything else. It also knows that there is a database that it can use to save the world or restore a world. However, it has no idea which code called it. It doesn’t even know that there is a protocol and a socket server!
+
+Modeling the domain is an entire body of knowledge, mostly characterised by the Domain Driven Design (DDD). We won’t tackle DDD in this iteration. Our focus is recognising what is not the domain and separating those concerns, leaving us with a domain layer. Later, we will learn more about DDD and that will help us design good domain models - the patterns that help us structure the classes inside the domain layer.
+
+soc architecture4
+What you need to do for this goal
+To complete this goal, the entire team should be involved in tackling the challenge below.
+
+An architectural challenge
+Here’s an architectural challenge for you.
+
+soc architecture3
+Where should the code that handles threads and the server console commands reside?
+
+Find the classes that handle the threads and server console commands. Are these classes independent of any domain code or not?
+
+Look at your codebase again and identify which classes are part of the domain.
+
+Look deeper into your domain classes and observe what non-domain code (if any) is intertwined with the domain code.
+
+Dig into your database access code. Are there any calls made from the database access code to the domain code? Is there any database access code in your domain classes?
+
+Notice how we conceptualise the architecture and look at the code to verify that it conforms to our conceptual view of the architecture.
+
+The code is the true representation of the architecture!
+
+Separation of Concerns: Designing for Change
+HTTP: The HyperText Transfer Protocol
+© 2024 WeThinkCode_, All Rights Reserved.
+
+Reuse by explicit written permission only.

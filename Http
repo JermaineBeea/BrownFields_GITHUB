@@ -1,0 +1,349 @@
+HTTP: The HyperText Transfer Protocol
+This section contains just enough information so that you can build the Web API layer for the RobotWorld server. Along the way, you will be pointed to more detailed info on the web. Use those resources as required.
+
+In order to learn about HTTP and Web APIs we will use a fun public website and API that shares random facts about cats. All the examples below make use of this API. Don’t worry about the details on that website for now. Simply follow along below and at the end you will understand the documentation on the website.
+
+What is HTTP
+HTTP is a protocol that makes the web work. A web server and a browser communicate with each other using the HTTP protocol. In using this protocol, the browser is able to request data from a web server. That data can be HTML, images, files, video, XML, JSON, etc. The browser is also able to send data to a web server, for example, when you submit a form.
+
+However, HTTP is not restricted to just browsers. A browser is just a program that knows how to use the HTTP protocol. Therefore, we should be able to write any other program that also uses the HTTP protocol. Most of the popular languages all provide libraries and frameworks that aid in writing programs that use HTTP.
+
+HTTP Messages
+An HTTP message is either an HTTP request or an HTTP response. For example, a browser will send an HTTP request message to a server, and the server will reply with an HTTP response message.
+
+You can see this in your browser by opening the developer tools window. In the screenshot below, we visited https://catfact.ninja/docs and we can see all the HTTP messages that the browser sent to the server at https://catfact.ninja.
+
+HTTP Headers
+There is a lot of info being shown. Here are three important bits of info that we use quite often when building or using a Web API.
+
+Status
+The HTTP protocol specifies a set of status code that is returned as part of the HTTP response message. In this example, we see a status code of 200 which means that the request was successful. See this page for a list of HTTP status codes.
+
+Method
+The HTTP protocol specifies a set of methods that is part of the request message. In this example, the method is GET which means that the browser is trying to get info from the server. Other methods include POST which is used to send message to the server (for example, a form that we fill in). See this page for more info on HTTP methods.
+
+Type
+This is specifies the content type returned in the HTTP response message. Once the browser knows the content type, it can figure out how to render it. For example, HTML must be displayed as a web page formatted accordingly, whereas JavaScript (js in the screenshot) must be executed as code.
+
+HTTP Message Headers
+There is a bit more to an HTTP message. The message consists of a header and body. Again, using the browser developer tools, we can inspect the header and body of request and response messages. By clicking on a single message in the list of messages we can see these details.
+
+http 2
+The header consist of key-value pairs. The HTTP protocol specifies a list of mandatory and optional supported keys. Notice how the content-type is specified as header key in the request and response headers.
+
+However, as developers we can also extend the header with our own keys. By convention, we denote the custom extensions with a prefix of X- which you can see in the screenshot above.
+
+Have a look at this page to find out about the different header keys for requests and responses. The headers are extensive and control how data is cached on the server or browser, security and credential strategies, what content types are supported. compression, modification dates and a lot more.
+
+HTTP Message Body
+The body of message contains the data sent in a request or received in a response. In the screenshot below, the body contains the JSON data that was received from the webserver.
+
+http 3
+Now you might be wondering that the data received is JSON but the web page shows HTML. The browser also received JavaScript code from the server. That JavaScript code is executed by the browser and that transforms the JSON to produce the final HTML that you see in the browser. Have a look at the screenshot above and notice the 3 js files received from the server.
+
+What is HTTPS?
+The S in HTTPS stands for Secure. The HTTP messages are encrypted using Transport Layer Security (TLS) or Secure Socket Layer (SSL) as it was formerly known. When a browser (or any HTTP client program) sends a HTTP request, the server will send a certificate which contains the public key. This is similar to how you setup and use your PGP keys for encryption and signing. Have a look at this page and the pages it links to for details on HTTPS, TLS, SSL and certificates.
+
+HTTP in Action
+Let’s see the HTTP protocol in action using a few different tools.
+
+Using your browser
+Open your browser and visit http://catfact.ninja/fact.
+
+http 4
+The first thing that you notice is that the data received is not a web page but JSON data. Also notice that we originally entered http://catfact.ninja/fact and the browser is now showing the address as https://catfact.ninja/fact. How did the protocol change from HTTP to HTTPS?
+
+Note that the content may be different because the API at catfact.ninja returns random facts about cats.
+
+Using Telnet
+Let’s use the telnet command line tool to see the raw protocol content directly. Telnet is available on just about every Linux operating system. It allows us to establish a socket-level connection with a server and send it any data that we like. In fact, you could use telnet to connect to your RobotWorld server and send it RobotWorld commands using the RobotWorld protocol.
+
+Open a shell and enter the following command.
+
+$ telnet catfact.ninja 80				
+Trying 34.82.234.192...					
+							
+Telnet establishes a socket level connection to a server over a specific port. In this case, we are connecting to the web server at catfact.ninja on port 80. Port 80 is the default port for the HTTP protocol on web servers. We don’t specify http:// here because that is the protocol specifier that the browser needs. Telnet is not a browser and simply forwards anything from the console to the server.
+A DNS server configured on your computer’s network interface converts the address catfact.ninja to its IP address 34.82.234.192
+Your terminal’s cursor should be on a blank line. The telnet program is still executing and is waiting for input from the console. You are now, literally, connected to the catfact.ninja server.
+Now send the web server at catfact.ninja an HTTP GET request message.
+
+Trying 34.82.234.192...
+Connected to catfact.ninja.
+Escape character is '^]'.
+
+GET /fact HTTP/1.1					
+Host: catfact.ninja					
+							
+HTTP/1.1 301 Moved Permanently				
+Server: nginx
+Date: Fri, 08 Oct 2021 19:25:09 GMT
+Content-Type: text/html					
+Content-Length: 162
+Connection: keep-alive
+Location: https://catfact.ninja/			
+
+<html>							
+<head><title>301 Moved Permanently</title></head>
+<body>
+<center><h1>301 Moved Permanently</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+Connection closed by foreign host.
+$							
+This the HTTP protocol instruction for a GET request. The /fact is the specific resource we are requesting. Type it exactly as shown here and press Enter to begin the next part of the message protocol.
+This part of the protocol specifies the name of the host from which the /fact resource is being requested.
+Simply press the Enter key to send an empty line which represents the end of the request message.
+The server responds with a status code of 301 which means that the resource http://catfact.ninja/fact that was requested has moved to another location.
+This header key tells us the the body of the response is HTML.
+This header key tells us that the requested resource has moved to the server at https://catfact.ninja.
+This is the start of the body of the response message and we see that it is HTML. Read the rest of the body and you will see text 301 Moved Permanently.
+Your cursor should be back at the shell prompt.
+Hold on! We saw JSON in the browser but we received HTML!?
+
+What actually happened is the browser received a 301 status code back and inspected the headers for the location key. It found that the resource has moved to https://catfact.ninja and then conveniently sent the same request to the new location. That is why the protocol changed from http to https.
+
+Telnet, on the other hand, is such a low level tool that it does not know how to interpret HTTP status codes and merely prints the output to the console. So, let’s connect to the location to which catfact.ninja has moved and send it the same HTTP message.
+
+$ telnet catfact.ninja 443			
+Trying 34.82.234.192...
+Connected to catfact.ninja.
+Escape character is '^]'.
+GET /fact HTTP/1.1				
+host: catfact.ninja
+
+HTTP/1.1 400 Bad Request			
+Server: nginx
+Date: Fri, 08 Oct 2021 20:07:12 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 248
+Connection: close
+
+<html>						
+<head><title>400 The plain HTTP request was sent to HTTPS port</title></head>
+<body>
+<center><h1>400 Bad Request</h1></center>
+<center>The plain HTTP request was sent to HTTPS port</center>
+<hr><center>nginx</center>
+</body>
+</html>
+Connection closed by foreign host.
+
+$
+We connect to port 443 of the server at catfact.ninja. Port 443 is the default port for HTTPS protocol of a web server.
+Send the same GET message as before. This time, though, it is going to the correct location being the HTTPS handler on port 443 of the server.
+We get a response with a status code of 400 and it tells us that we made a bad request. The problem is that the server on port 443 uses HTTPS and telnet does not support TLS/SSL.
+This is the start of the body of the response. Reading through the body we can see text saying that we tried sending plain (unencrypted) HTTP message to a secure server. Note that this text is a convenient message programmed by the team that built the catfact.ninja API. Not all servers will send such kind and informative messages.
+So, if telnet does not support TLS/SSL, how else can we explore HTTPS?
+
+OpenSSL to the rescue!
+
+Using OpenSSL
+OpenSSL is a cryptography toolkit that supports TLS/SSL. We can use its s_client command which is a generic TLS/SSL interface for testing purposes.
+
+$ openssl s_client -connect catfact.ninja:443			
+CONNECTED(00000003)						
+depth=2 C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust RSA Certification Authority
+verify return:1
+depth=1 C = GB, ST = Greater Manchester, L = Salford, O = Sectigo Limited, CN = Sectigo RSA Domain Validation Secure Server CA
+verify return:1
+depth=0 CN = catfact.ninja
+verify return:1
+---
+Certificate chain
+ 0 s:CN = catfact.ninja
+   i:C = GB, ST = Greater Manchester, L = Salford, O = Sectigo Limited, CN = Sectigo RSA Domain Validation Secure Server CA
+ 1 s:C = GB, ST = Greater Manchester, L = Salford, O = Sectigo Limited, CN = Sectigo RSA Domain Validation Secure Server CA
+   i:C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust RSA Certification Authority
+ 2 s:C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust RSA Certification Authority
+   i:C = GB, ST = Greater Manchester, L = Salford, O = Comodo CA Limited, CN = AAA Certificate Services
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIFvDCCBKSgAwIBAgIQIXxXJ14KnqC07F0/NAzakDANBgkqhkiG9w0BAQsFADCB
+jzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G
+A1UEBxMHU2FsZm9yZDEYMBYGA1UEChMPU2VjdGlnbyBMaW1pdGVkMTcwNQYDVQQD
+...								
+dVKjvmX4vSZ1xwEgF7r9LN58snBZodl1C9nRP7CbZWHieTe06JQqvogTpA5UrW6d
+uFyqaN9FlAlylRv3a3rP2JNbiPA0DYAQIV8NBLDBdgo=
+-----END CERTIFICATE-----
+subject=CN = catfact.ninja
+
+issuer=C = GB, ST = Greater Manchester, L = Salford, O = Sectigo Limited, CN = Sectigo RSA Domain Validation Secure Server CA
+
+---
+No client certificate CA names sent
+Peer signing digest: SHA256
+Peer signature type: RSA-PSS
+Server Temp Key: X25519, 253 bits
+---
+SSL handshake has read 5014 bytes and written 385 bytes		
+Verification: OK
+---
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Server public key is 2048 bit
+...								
+    00d0 - b7 73 1b 23 2c c5 37 33-1c a5 d6 a2 bf 9f ee cc   .s.#,.73........
+    00e0 - c2 6c 06 63 51 b0 5b 25-7c d8 b8 50 e9 ef 98 20   .l.cQ.[%|..P...
+
+    Start Time: 1633724563
+    Timeout   : 7200 (sec)
+    Verify return code: 0 (ok)
+    Extended master secret: no
+    Max Early Data: 0
+---
+read R BLOCK
+								
+Run OpenSSL and issue it the s_client command and tell it to connect to the server at catfact.ninja on port 443.
+This is the start of the TLS/SSL interaction from the server. Note that this is not yet anything to do with HTTP messages. This is about the TLS/SSL part of the HTTPS protocol.
+The …​ is only shown in this snippet and it means that we have removed a lot of the output that you would see in your terminal. Notice, though, that a server certificate is being returned and it looks quite similar to the keys that you setup for PGP.
+Here’s the TLS/SSL negotiation info telling us that the openssl client is trying to setup a TLS/SSL connection.
+snip, snip …​ details removed
+You should now have your cursor on a blank line. OpenSSL is waiting for input from the console to send to the server.
+Now let’s send it an HTTP GET message, just as we did with telnet.
+
+GET /fact HTTP/1.1						
+host: catfact.ninja
+								
+HTTP/1.1 200 OK							
+Server: nginx
+Content-Type: application/json					
+...
+{"fact":"The smallest wildcat today is the Black-footed cat. 	
+The females are less than 20 inches (50 cm) long and can weigh as little as 2.5 lbs (1.2 kg).","length":145}
+0
+								
+Here is the same HTTP GET request message that we sent using telnet.
+Remember to press Enter to send a blank line to tell the server that this is the end of the HTTP request message.
+The server has sent back an HTTP response message with status code 200 which means success.
+Here’s the header key that tells us that the body of the HTTP response contains JSON data. There is a lot of data returned, so we snipped out a lot in the output shown above and replaced it with …​
+This is the body of the response and we can recognise it as JSON.
+Your cursor should be on a blank line waiting for the next message.
+Using cURL
+Issuing raw HTTP protocol commands is really inconvenient. Let’s explore the HTTP API for catfact.ninja using another command line tool curl. Have a look at the cURL website for installation options. Though the easiest option is to use your Linux distribution’s package manager.
+
+$ curl --request GET 'http://catfact.ninja/fact' 		
+<html>								
+<head><title>301 Moved Permanently</title></head>
+<body>
+<center><h1>301 Moved Permanently</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+$
+We tell cURL to issue an HTTP GET message for the resource /fact at catfact.ninja.
+Oops! We get the same message telling us that the resource has moved.
+Fortunately, we can tell cURL to follow the location header value and re-issue the request. In other words, simulate what a decent browser would do.
+
+$ curl --location \						
+--request GET 'http://catfact.ninja/fact'			
+
+{"fact":"A cat can sprint at about thirty-one miles per hour.","length":52} 	
+Follow the location value if it is returned by the server. Note that you don’t have to split the command over multiple lines. It’s done so here to make it easier to explain the different parts of the command.
+Send a GET message to the server.
+cURL simply prints the body of the response to the console.
+We can use the --include option to tell cURL to ouput the message headers too.
+
+$ curl --location \
+--request GET 'http://catfact.ninja/fact' \
+ --include							
+
+HTTP/1.1 301 Moved Permanently					
+Server: nginx
+Date: Fri, 08 Oct 2021 20:45:18 GMT
+Content-Type: text/html
+Content-Length: 162
+Connection: keep-alive
+Location: https://catfact.ninja/fact
+
+HTTP/2 200							
+server: nginx
+content-type: application/json
+vary: Accept-Encoding
+cache-control: no-cache, private
+date: Fri, 08 Oct 2021 20:45:19 GMT
+x-ratelimit-limit: 300
+x-ratelimit-remaining: 299
+x-frame-options: SAMEORIGIN
+x-xss-protection: 1; mode=block
+x-content-type-options: nosniff
+
+{"fact":"British cat owners spend roughly 550 million pounds yearly on cat food.","length":71}% 
+Tell cURL to output the HTTP message headers. Note that you don’t have to split the command over multiple lines. It’s done so here to make it easier to explain the different parts of the command.
+These are the headers from the first HTTP request to port 80 which returned the response that the resource has moved.
+This is the header ouput of the automatic resend of the HTTP request to the new location.
+The body of the response for the second HTTP request.
+What you need to do for this goal
+For this goal, you need to be able to write the following code and successfully execute it.
+
+Using Python
+Let’s try doing what we did with cURL using Python code.
+
+import http.client						
+
+conn = http.client.HTTPSConnection("catfact.ninja")		
+body = ''							
+headers = {							
+  'Accept': 'application/json'
+}
+conn.request("GET", "/fact", body, headers)			
+res = conn.getresponse()					
+print(res.status)						
+data = res.read()						
+print(data.decode("utf-8"))					
+Use the python HTTP client library.
+Create an HTTP connection object to connect to catfact.ninja.
+The connection object’s request method requires a body which in this case is empty.
+Specify any headers that we want to send with the HTTP request being the requested content type in this case.
+Send a GET message for the /fact resource.
+Get the response message from the connection object.
+Print the value of the HTTP response status code.
+Read the data from the body of the response.
+Decode the body’s data and print it to the console.
+Using Java
+There are many libraries that for HTTP and HTTPS for the popular programming languages and the Java ecosystem is no different. In the example program below, we use the Unirest library.
+
+Maven dependency for Unirest
+<dependency>
+    <groupId>com.konghq</groupId>
+    <artifactId>unirest-java</artifactId>
+    <version>3.13.0</version>
+</dependency>
+Let’s get a random cat fact using Unirest and Java.
+
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
+
+public class RandomCatFact {
+    public static void main(String[] args) {
+        HttpResponse<String> response = Unirest.get("https://catfact.ninja/fact").asString(); 
+        System.out.println("Response Status Code:" + response.getStatus()); 
+        System.out.println("Body: " + response.getBody()); 
+    }
+}
+Send an HTTP GET request and get the body back as a string.
+Print the HTTP response status code to the console.
+Print the body of the response to the console.
+When you run this program, it’s output should be similar to the following.
+
+Response Status Code:200
+Body: {"fact":"Approximately 40,000 people are bitten by cats in the U.S. annually.","length":68}
+Resources
+Here is a useful resource that explains the details of HTTP and some associated tools.
+
+Learn HTTP
+
+Mozilla Developer Network
+
+The official cURL website and a cURL tutorial
+
+A Guide to Unirest.
+
+Postman is another popular developer tool for testing and exploring Web APIs
+
+Separation of Concerns
+The Web API Layer
+© 2024 WeThinkCode_, All Rights Reserved.
+
+Reuse by explicit written permission only.

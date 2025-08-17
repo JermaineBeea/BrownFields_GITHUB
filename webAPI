@@ -1,0 +1,710 @@
+The Web API Layer
+Now you will apply the principle of separation of concerns to build a new layer for your RobotWorld server. This new layer is responsible for providing an HTTP interface to the server, also known as a Web API.
+
+Note that in the next iteration, you will build a mobile app that will use this Web API. So, it is important to get this Web API working.
+
+In order to build a Web API, you do need a reasonable understanding of HTTP. Go over the HTTP section which introduces just enough of HTTP in order to implement the API.
+
+How do we build a Web API?
+In order to build a Web API, we need to write code that implements a server that implements the HTTP protocol. The server must be able to receive HTTP request messages, parse it, perform some other domain logic, and reply with a HTTP response message - all within a few milliseconds! That’s a lot of programming. Fortunately, this is such a common situation that there are frameworks and libraries written that take care of the socket level code, and the HTTP protocol too.
+
+Web Servers
+Just about every popular language have decent frameworks. In Python, there are frameworks like Flask and Django. Some are minimalist and just implement the HTTP protocol and the rest is up to you. Others combine an HTTP protocol server with a persistence framework too.
+
+The Java Servlet Container
+In the Java ecosystem, the HTTP server is defined by the Servlet Specification. This specification explains what a framework developer should build in order to conform to the the Java implementation of an HTTP Web API server. The server that conforms to the Servlet specification is known as a Servlet Container. (Don’t confuse this with Docker containers!)
+
+As programmers simply wanting to build a Web API, we need to use a servlet container. The servlet container is just another Java program, often packaged as a JAR, that you run on the JVM. Some examples of these are Apache Tomcat and Jetty.
+
+Here’s a simple explanation of how Servlet container works.
+
+web api 1
+The JVM runs the servlet container program.
+
+We deploy our compiled and packaged HTTP API code and install it in a directory that the servlet container is aware of. The package has an extension of .war which is similar to a .jar but with extra info that tells the servlet container how to configure our code and execute it.
+
+The servlet container reads the packaged code and runs it on our behalf.
+
+The servlet container can run many different web API packages at the same time.
+
+Some servlet containers are quite lightweight and you can start them up from your own code by simply running it from main(). These are known as embedded servlet containers.
+
+web api 2
+Web Frameworks
+Having a servlet container is one part of the puzzle. The next part is writing code that the servlet container can use. For this, the servlet specification explains how to write such code.
+
+However, this is quite a low level of detail and the code you write becomes quite repetitive quickly. Over the years, we’ve recognised this inconvenience and so many frameworks have been published that conform tothe servlet specification and make programming Web APIs a lot simpler.
+
+Some examples of such frameworks are Spring Boot and Dropwizard. There are many more and it often is just a personal choice of what a team prefers.
+
+So, remember that the web framework makes it easy to write servlet code that runs in a servelet container that runs on the JVM. The servlet container can be run as separate server and we deploy our web API packages to that server. Alternatively, we can use an embedded servlet container that our Java app will bootstrap and run our API code. Writing API code is simplified by using a web framework.
+
+Building your first Web API
+Before you get to building the Web API for RobotWorld, you first need to learn how to use the servlet container and simple Web API framework. We have found that Javalin is great framework to learn how to build Web APIs. It also has an embedded servlet container which simplifies running our Web API.
+
+Don’t skip this section! Do complete the tutorials below before attempting to build the RobotWorld Web API.
+Setup Javalin
+Create a new Maven based project in IntelliJ.
+
+Add the following dependency for Javalin.
+
+<dependency>
+    <groupId>io.javalin</groupId>		
+    <artifactId>javalin</artifactId>
+    <version>4.1.0</version>
+</dependency>
+<dependency>
+    <groupId>org.slf4j</groupId>		
+    <artifactId>slf4j-simple</artifactId>
+    <version>1.7.31</version>
+</dependency>
+This is the Javalin framework.
+Javalin provides better output on the console when it finds a logging framework in its classpath.
+A Webby Hello World
+Now add a new class with the following code.
+
+WebbyHelloWorld.java
+import io.javalin.Javalin;
+
+public class WebbyHelloWorld {
+    public static void main(String[] args) {
+        Javalin server = Javalin.create()   
+                .start(7000); 
+        server.get("hello", 
+                context -> context.result("Hello, world!")); 
+    }
+}
+Create an instance of the Javalin embedded servlet container
+…​and start it up to listen on port 7000
+The server will respond to an HTTP GET message at the resource /hello
+…​ by returning plain text Hello, world!
+When you run this code, you should see output similar to the following.
+
+[main] INFO io.javalin.Javalin -
+       __                      __ _            __ __
+      / /____ _ _   __ ____ _ / /(_)____      / // /
+ __  / // __ `/| | / // __ `// // // __ \    / // /_
+/ /_/ // /_/ / | |/ // /_/ // // // / / /   /__  __/
+\____/ \__,_/  |___/ \__,_//_//_//_/ /_/      /_/
+
+          https://javalin.io/documentation
+
+[main] INFO org.eclipse.jetty.util.log - Logging initialized @293ms to org.eclipse.jetty.util.log.Slf4jLog
+[main] INFO io.javalin.Javalin - Starting Javalin ...
+[main] INFO io.javalin.Javalin - You are running Javalin 4.1.0 (released October 2, 2021).
+[main] INFO io.javalin.Javalin - Listening on http://localhost:7000/
+[main] INFO io.javalin.Javalin - Javalin started in 267ms \o/
+Read through the info and notice that it is logging the port that we specified being 7000.
+
+In another terminal, run cURL to check if your Web server is working.
+
+$ curl --request GET 'http://localhost:7000/hello' --include	
+
+HTTP/1.1 200 OK							
+Date: Sat, 09 Oct 2021 19:38:55 GMT
+Content-Type: text/plain					
+Content-Length: 13
+
+Hello, world!% 							
+We tell cURL to send an HTTP GET message to the server on our own computer on port 7000. Remember that this is port that we hardcoded in our class.
+The response message has a status code of 200 which tells us that the GET request was successful.
+The content in the body is plain text.
+This is the body that we expected being the hardcode string.
+Now run a cURL command for a GET message sent to "http://localhost:7000/world". You should get back a response similar to the following.
+
+$ curl --request GET 'http://localhost:7000/world' --include
+
+HTTP/1.1 404 Not Found
+Date: Sat, 09 Oct 2021 19:45:28 GMT
+Content-Type: text/plain
+Content-Length: 9
+
+Not found%
+You should be able to read the output of cURL by now. Notice that the status code is 404 telling us that the resource /world does not exist on this server. More importantly, we did not code this and the Javalin framework provided a default response message. This is one of the conveniences of using a web framework.
+
+A Testable Webby Hello World
+Using cURL to test our servers is not that convenient. We already have a good testing framework in JUnit and our build scripts and build pipelines already make use of Maven to run our JUnit based tests. It makes sense, then, to use JUnit to test our Web API.
+
+If we look at our HelloWorld code, we see that everything is executed in a main() method. This makes our class very difficult to test. In the HTTP section, we used the Unirest library to call the catfact.ninja API. Let’s use that same library in our test, so add it as a dependency in the test scope.
+
+Maven dependency for Unirest
+<dependency>
+    <groupId>com.konghq</groupId>
+    <artifactId>unirest-java</artifactId>
+    <version>3.13.0</version>
+    <scope>test</scope>
+</dependency>
+Now create a new class that is a more testable WebbyHelloWorld.
+
+TestableWebbyHelloWorld.java
+import io.javalin.Javalin;
+
+public class TestableWebbyHelloWorld {
+    private final Javalin server; 
+
+    public TestableWebbyHelloWorld() {
+        this.server = Javalin.create(); 
+        this.server.get("hello", context -> context.result("Hello, world!")); 
+    }
+
+    public Javalin start() { 
+        return this.server.start(7000);
+    }
+
+    public Javalin stop() { 
+        return this.server.stop();
+    }
+
+    public static void main(String[] args) { 
+        TestableWebbyHelloWorld api = new TestableWebbyHelloWorld();
+        api.start();
+    }
+}
+We create a private variable that will reference the running server.
+The constructor instantiates the Javalin server.
+We create a handler for a GET request at /hello.
+This simply delegates to the Javalin server to start it.
+This also delegates to the Javalin server, but this time to stop it.
+The main() method now instantiates a HelloWorld object and starts the server. We don’t really need this for testing at all because, as you see next, the test starts and stops the server. It’s included to show you how to use the more testable class to run the server as a separate program.
+Now write the test code!
+
+WebbyHelloWorldTest.java
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class WebbyHelloWorldTest {
+
+    @Test
+    @DisplayName("GET /hello")  
+    public void shouldGetHelloWorld() {
+        TestableWebbyHelloWorld api = new TestableWebbyHelloWorld(); 
+        api.start(); 
+        HttpResponse<String> response = Unirest.get("http://localhost:7000/hello").asString(); 
+        assertEquals(200, response.getStatus()); 
+        assertEquals("Hello, world!", response.getBody()); 
+        api.stop(); 
+    }
+}
+Give the test a more descriptive name that reflects the HTTP request under test
+Create a new instance of our API.
+Start the server (remember it listens on port 7000).
+Let’s send the server a GET /hello request and get the response back as a string.
+Check that the status code is 200 meaning the request was good.
+Check that the body of the response has the correct string.
+Stop the server.
+Run the test and it should pass.
+
+The Javalin testing tutorial starts with an example that uses mocking. This is discouraged in favour of the above testing approach. With the above approach, starting and stopping the server is a computationally cheap operation and further ensures that all the code in the execution path does indeed get executed. In the aforementioned tutorial, the author later gives a similar example as ours and also encourages this approach to testing.
+
+Using HTTP POST to send data to the server
+So far, we have used HTTP GET requests. We typically use GET for reading data. Now we turn our attention to the HTTP POST request which is used for sending data to the server.
+
+Let’s write an API that will receive the name of person and return a greeting back in response.
+
+GreetingApi.java
+import io.javalin.Javalin;
+
+public class GreetingApi {
+
+    private final Javalin server;
+
+    public GreetingApi() {
+        this.server = Javalin.create();
+        this.server.post("/greet", context -> { 
+           String name = context.body(); 
+           context.result("Hello, " + name + "!"); 
+           context.status(201); 
+        });
+    }
+
+    public Javalin start() {
+        return this.server.start(7000);
+    }
+
+    public Javalin stop() {
+        return this.server.stop();
+    }
+
+    public static void main(String[] args) {
+        GreetingApi api = new GreetingApi();
+        api.start();
+    }
+}
+We tell Javalin to handle a POST message for /greet.
+The name to greet is a string in the body of the POST message.
+Send the response with the body being a greeting as a string.
+This time we explicitly return a status code of 201. This status code means "Created" and is usually used with a successful POST response. Semantically, it means that the server successfully created the greeting.
+You can run this program and see it in action with cURL.
+
+curl --request POST 'http://localhost:7000/greet' -d 'World' --include		
+HTTP/1.1 201 Created								
+Date: Sun, 10 Oct 2021 09:45:05 GMT
+Content-Type: text/plain
+Content-Length: 13
+
+Hello, World!%
+We tell cURL to send a POST message with --request POST and we provide the content of the body with -d 'World'
+The status returned is 201 as expected.
+As usual, cURL is good for exploring without writing code. However, we should write a test for our POST request.
+
+GreetingApiTest.java
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class GreetingApiTest {
+
+    @Test
+    @DisplayName("POST /greet")  
+    public void shouldGreet() {
+        GreetingApi api = new GreetingApi(); 
+        api.start(); 
+        HttpResponse<String> response = Unirest.post("http://localhost:7000/greet") 
+                .body("World") 
+                .asString(); 
+        assertEquals(201, response.getStatus()); 
+        assertEquals("Hello, World!", response.getBody()); 
+        api.stop(); 
+    }
+}
+A better name for the test.
+Create the API.
+Start the server.
+Send a POST HTTP message.
+In the body of the request, send the string World.
+Get the response back as a string.
+Check that the status code is indeed 201 - Created!
+And the body has the correct greeting text.
+Clean up by stopping the server.
+Separating the Web API from the Domain
+Let’s try something a bit more ambitious. We are going to write an API for more-interesting quotes. In doing so, we will need to work with JSON data, so add the following Maven dependency which is JSON library.
+
+<dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>2.12.4</version>
+</dependency>
+Our API must support the following HTTP messages:
+
+GET /quotes should return a list of quotes.
+
+GET /quote/{id} should return a single quote specified by a unique id.
+
+POST /quotes should add a new quote.
+
+Our architecture will be a Layered Architecture as follows.
+
+web api 3
+Let’s start by building this a layer at a time
+
+The Domain Layer
+The domain for the quotes API is very simple consisting of a single class.
+
+Quote.java
+public class Quote {
+    private Integer id;
+    private String text;
+    private String name;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Use this convenient factory method to create a new quote.
+     * Warning the ID will be null!
+     * @param text the text of the quote
+     * @param name the name of the person that said the text
+     * @return a Quote object
+     */
+    public static Quote create(String text, String name) {
+        Quote quote = new Quote();
+        quote.setText(text);
+        quote.setName(name);
+        return quote;
+    }
+}
+For brevity, the tests for the Domain Layer are not shown.
+
+The Data Access Layer
+To keep the Data Access Layer separated from the Web API Layer, we introduce an interface. Since our focus is on the Web API, we create a Map based implementation of the interface as a test database. The data access layer design is shown below.
+
+web api 4
+Here is the interface for the data access layer.
+
+QuoteDB.java
+import java.util.List;
+
+public interface QuoteDB {
+    /**
+     * Get a single quote by id.
+     * @param id the Id of the quote
+     * @return a Quote
+     */
+    Quote get(Integer id);
+
+    /**
+     * Get all quotes in the database
+     * @return A list of quotes
+     */
+    List<Quote> all();
+
+    /**
+     * Add a single quote to the database.
+     * @param quote the quote to add
+     * @return the newly added Quote
+     */
+    Quote add(Quote quote);
+}
+Here is the implementation of the database access interface that uses a Map. We hardcoded a few quotes which will make testing the API convenient. This is done only for this example so we can focus on the Web API layer more.
+
+TestDatabase.java
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class TestDatabase implements QuoteDB {
+    private Map<Integer, Quote> quotes;
+
+    public TestDatabase() {
+        quotes = new HashMap<>();
+        this.add(Quote.create("There is no snooze button on a cat who wants breakfast.", "Unknown"));
+        this.add(Quote.create("Never try to outstubborn a cat.","Robert A. Heinlein"));
+        this.add(Quote.create("To err is human, to purr is feline.", "Robert Byrne"));
+    }
+
+    @Override
+    public Quote get(Integer id) {
+        return quotes.get(id);
+    }
+
+    @Override
+    public List<Quote> all() {
+        return new ArrayList<>(quotes.values());
+    }
+
+    @Override
+    public Quote add(Quote quote) {
+        Integer index = quotes.size() + 1;
+        quote.setId(index);
+        quotes.put(index, quote);
+        return quote;
+    }
+}
+The Web API Layer
+The Web API Layer will consist of two classes. The first class is responsible for defining the HTTP interface and running the server. The second class is responsible for handling the content of the HTTP messages and interacting with the Domain and Data Access layers. This design is shown below.
+
+web api 5
+Here are the two classes that make up the Web API Layer.
+
+QuoteServer.java
+import io.javalin.Javalin;
+
+import static io.javalin.apibuilder.ApiBuilder.*;
+
+public class QuoteServer {
+    private final Javalin server;
+
+    public QuoteServer() {
+        server = Javalin.create(config -> {
+            config.defaultContentType = "application/json"; 
+        });
+
+        this.server.get("/quotes", context -> QuoteApiHandler.getAll(context)); 
+        this.server.get("/quote/{id}", context -> QuoteApiHandler.getOne(context)); 
+        this.server.post("/quotes", context -> QuoteApiHandler.create(context)); 
+    }
+
+    public static void main(String[] args) {
+        QuoteServer server = new QuoteServer();
+        server.start(5000);
+    }
+
+    public void start(int port) {
+        this.server.start(port);
+    }
+
+    public void stop() {
+        this.server.stop();
+    }
+}
+Since we are only supporting JSON, we configure our Web API server to set the content type in the HTTP response headers to default to application/json.
+This handles GET /quotes by asking QuoteApiHandler to do the work of parsing the request and building the response.
+This handles GET /quote/{id} by delegating the work to QuoteApiHandler. Notice the convention used to specify a replacable parameter {id} that is part of the URI. This is peculiar to Javalin and is not part of the Servlet API nor the HTTP specification. Though, many web API frameworks have adopted this convention. For example, if we wanted to get the quote with the id of 3 then we will send an HTTP GET message to /quote/3. The Javalin framework provides functionality to parse the URI to get the id of the quote. We will see this in action shortly.
+This handles POST /quotes with the assumption that the body of the HTTP request contains a JSON representation of the quote to add. The QuoteServer doesn’t take on the responsibility of checking if the HTTP request actually has a quote. That responsibility is taken on by QuoteApiHandler.create().
+Pay attention to how the server class is only responsible for specifying the HTTP requests that are supported by the API. It does not even know that there is a database or not. All the heavy work is passed on to QuoteApiHandler.
+
+Now we turn our attention to the QuoteApiHandler class that takes care of processing the HTTP requests and responses.
+
+QuoteApiHandler.java
+import io.javalin.http.Context;
+import io.javalin.http.HttpCode;
+import io.javalin.http.NotFoundResponse;
+
+public class QuoteApiHandler {
+    private static final QuoteDB database = new TestDatabase(); 
+
+    /**
+     * Get all quotes
+     *
+     * @param context The Javalin Context for the HTTP GET Request
+     */
+    public static void getAll(Context context) {
+        context.json(database.all()); 
+    }
+
+    /**
+     * Get one quote
+     *
+     * @param context The Javalin Context for the HTTP GET Request
+     */
+    public static void getOne(Context context) {
+        Integer id = context.pathParamAsClass("id", Integer.class).get(); 
+        Quote quote = database.get(id); 
+        context.json(quote); 
+    }
+
+    /**
+     * Create a new quote
+     *
+     * @param context The Javalin Context for the HTTP POST Request
+     */
+    public static void create(Context context) {
+        Quote quote = context.bodyAsClass(Quote.class); 
+        Quote newQuote = database.add(quote); 
+        context.header("Location", "/quote/" + newQuote.getId()); 
+        context.status(HttpCode.CREATED); 
+        context.json(newQuote); 
+    }
+}
+Get a reference to the Data Access Layer class using the QuoteDB interface referencing the TestDatabase implementation.
+This single line uses the convenience of Javalin’s built in JSON serialiser. It takes the list of quote objects from the database.all() call and serialises it a JSON representation and adds it to the body of the response.
+Remember that we specified the id of the quote will be in the path of the URI as /quote/{id}. Here we use Javalin’s context class to extract the id as an integer.
+We call the database to retrieve the quote with that id.
+Javalin conveniently converts the quote to JSON and adds it to the body of the response.
+Once again, Javalin offers us a convenient way to convert the body of the request which was JSON into a Quote object.
+Call the database to add the quote.
+It is useful to set the HTTP header in the response to tell the call the URI of the newly created Quote. The caller can use this info to do a GET /quote/{id} later.
+We set the status code to created. Notice that we are using the constant and not the hardcoded value of 201.
+Finally, we send the newly added Quote object back as JSON in the body of the response.
+Testing our API manually
+Run the server, and use cURL to check our Web API in action.
+
+GET /quotes
+$ curl --request GET 'http://localhost:5000/quotes' --include
+
+HTTP/1.1 200 OK
+Date: Sun, 10 Oct 2021 16:16:39 GMT
+Content-Type: application/json
+Content-Length: 283
+
+[{"id":1,"text":"There is no snooze button on a cat who wants breakfast.","name":"Unknown"},
+{"id":2,"text":"Never try to outstubborn a cat.","name":"Robert A. Heinlein"},
+{"id":3,"text":"To err is human, to purr is feline.","name":"Robert Byrne"}]%
+Excellent! We get back a JSON array of quotes! Note that the output above shows each quote on a different line for convenience. In reality, the output has no line breaks.
+
+GET /quote/{id}
+$ curl --request GET 'http://localhost:5000/quote/3' --include
+
+HTTP/1.1 200 OK
+Date: Sun, 10 Oct 2021 16:18:38 GMT
+Content-Type: application/json
+Content-Length: 75
+
+{"id":3,"text":"To err is human, to purr is feline.","name":"Robert Byrne"}%
+Exactly as expected - a single quote!
+
+POST /quotes
+$ curl --request POST 'http://localhost:5000/quotes' -d '{"text":"Meow", "name":"The Cat"}' --include
+HTTP/1.1 201 Created
+Date: Sun, 10 Oct 2021 16:20:17 GMT
+Content-Type: application/json
+Location: /quote/4
+Content-Length: 39
+
+{"id":4,"text":"Meow","name":"The Cat"}%
+Perfect!
+
+Automated testing of the API
+Now that we have a much better understanding of HTTP and the tools we use to build Web APIs, let’s write a few tests for our Web API.
+
+Do take a few minutes to read through the test code. By now, it should be understandable to you.
+
+QuoteApiTests.java
+import kong.unirest.HttpResponse;
+import kong.unirest.JsonNode;
+import kong.unirest.Unirest;
+import kong.unirest.UnirestException;
+import kong.unirest.json.JSONArray;
+import kong.unirest.json.JSONObject;
+import org.junit.jupiter.api.*;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class QuoteApiTests {
+    private static QuoteServer server;
+
+    @BeforeAll
+    public static void startServer() {
+        server = new QuoteServer();
+        server.start(5000);
+    }
+
+    @AfterAll
+    public static void stopServer() {
+        server.stop();
+    }
+
+    @Test
+    @DisplayName("GET /quote/{id}")
+    public void getOneQuote() throws UnirestException {
+        HttpResponse<JsonNode> response = Unirest.get("http://localhost:5000/quote/1").asJson();
+        assertEquals(200, response.getStatus());
+        assertEquals("application/json", response.getHeaders().getFirst("Content-Type"));
+
+        JSONObject jsonObject = response.getBody().getObject();
+        assertEquals("There is no snooze button on a cat who wants breakfast.", jsonObject.get("text"));
+        assertEquals("Unknown", jsonObject.get("name"));
+    }
+
+    @Test
+    @DisplayName("GET /quotes")
+    void getAllQuotes() throws UnirestException {
+        HttpResponse<JsonNode> response = Unirest.get("http://localhost:5000/quotes").asJson();
+        assertEquals(200, response.getStatus());
+        assertEquals("application/json", response.getHeaders().getFirst("Content-Type"));
+
+        JSONArray jsonArray = response.getBody().getArray();
+        assertTrue(jsonArray.length() > 1);
+    }
+
+    @Test
+    @DisplayName("POST /quotes")
+    void create() throws UnirestException {
+        HttpResponse<JsonNode> response = Unirest.post("http://localhost:5000/quotes")
+                .header("Content-Type", "application/json")
+                .body(Quote.create("Meow", "The Cat"))
+                .asJson();
+        assertEquals(201, response.getStatus());
+        assertEquals("/quote/4", response.getHeaders().getFirst("Location"));
+
+        response = Unirest.get("http://localhost:5000/quote/4").asJson();
+        assertEquals(200, response.getStatus());
+    }
+}
+Error Handling
+Our Web API does not handle any errors.
+
+The error could be a badly formed HTTP request. For example, the server could receive a GET /quote/xyz request which is not a quote id.
+
+We can also have domain errors. For example, the server could receive a GET /quote/7 request and quote with id 7 may not exist in the database.
+
+Try the above with cURL for the API and observe what happens.
+
+Generally, we want to be able to handle errors gracefully. For details on how to handle errors with Javalin, have a look at the Javalin documentation and tutorials.
+
+As an introduction to handling errors, let’s modify our GET /quote/{id} to handle the case of the quote not being in the database.
+
+Modify the QuoteApiHandler class as follows.
+
+QuoteApiHandler.java
+    public static void getOne(Context context) {
+        Integer id = context.pathParamAsClass("id", Integer.class).get();
+        Quote quote = database.get(id);
+        if (quote == null) { 
+            throw new NotFoundResponse("Quote not found: " + id); 
+        }
+        context.json(quote);
+    }
+The quote could not be found in the database.
+Ask Javalin to return a response with status code 404 - Not found. This is a convenience of the Javalin framework. Other frameworks may require you to explicitly set the status code and write code for the response body etc.
+With this modification, try it with cURL and see what happens.
+
+Documenting a Web API with OpenAPI
+The most common way to document and publish a Web API is to use OpenAPI. Conveniently, Javalin has a plugin that enables us to document our Web API with OpenAPI based annotations. Have a look at the OpenAPI Plugin documentation.
+
+We are not going to cover OpenAPI at this stage but do feel free to come back to this if you have time in the iteration. There is an optional task associated with documenting your API.
+
+Deploying your Web API with Docker
+There are a few ways to deploy your Web API with docker. We are sure that you will be able to figure it out on your own. After all, it is just another Java program.
+
+The Javalin community tutorial shows how to deploy a Javalin based Web API with Maven, using a Maven plugin for Docker. You do not have to do it this way at all because your existing scripts call Maven and then calls Docker; whereas the tutorial used Maven to call docker directly.
+
+There is an optional task to build and publish your API with Docker. Only tackle this if you have time or if you have not done any docker related tasks to date.
+
+What you need to do for this goal
+For this goal, you must implement a Web API layer for the RobotWorld.
+
+One approach is to create a new class that runs a Web API server. Depending on your specific codebase, you need to also find a way for the Web API server to instantiate a World object into which objects can be placed a robot launched. How you implement this is up to you. Remember that the World is part of the Domain Layer so keep it separated. It is ok for the Web API Layer to hold a reference to the World but the World should not know it is being used by a Web API Layer, nor anything to do with the original socket server and threads.
+
+We are not providing detailed specifications so that you get to make a few design decisions about your API.
+The API must handle the HTTP requests described below.
+
+GET /world
+The request takes a path parameter being the name of the world. In the previous iteration, you wrote code to save objects in the world to a database. You also wrote code to restore the world from the database.
+
+This request has two scenarios:
+
+If the {world} is specified, then restore the objects from the database for that world and return all objects in the world as JSON in the response.
+
+If the {world} is not specified (i.e. the request is simply GET /world) then return all objects in the current world as JSON in the response.
+
+Make sure your JSON data structure is well-formed.
+
+POST /robot/{name}
+This request must send a RobotWorld command to the Web API. The command is the same command that you used for the RobotWorld socket server and client. For now, the only command you need to support is the Launch command.
+
+The body of the request must contain a valid RobotWorld JSON command for Launch.
+
+The body of the response must contain a valid RobotWorld JSON response.
+
+All code must have automated unit tests, but you do not have to document your API.
+OPTIONAL
+Add functionality to support the Look command. It should use the same POST /robot/{name} HTTP method as above.
+
+OPTIONAL: Package your API with Docker
+Attempt this task if you have the time in this iteration. If you don’t have the time, you will have opportunity to tackle this later in the semester.
+
+Update your build to package the Web API as a docker image.
+
+Update your build pipeline to build and publish the docker image that has the Web API.
+
+OPTIONAL: Document your API
+Use the Javalin OpenAPI plugin to document your API. Only do this if you have the time and want to learn how to share your API using OpenAPI. Again, if you don’t get to do this, fear not because there will be opportunity to use OpenAPI later in your coursework.
+
+HTTP: The HyperText Transfer Protocol
+Object-relational Mapping (ORM)
+© 2024 WeThinkCode_, All Rights Reserved.
+
+Reuse by explicit written permission only.
