@@ -21,7 +21,7 @@ public class ConfigLoader {
         return properties;
     }
 
-    public void applyConfigToWorld(World world, String resourcePath) {
+    public void applyConfigToWorld(ServerWorld world, String resourcePath) {
         System.out.println("Loading configuration...");
         try {
             Properties properties = loadConfig(resourcePath);

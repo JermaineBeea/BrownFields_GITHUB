@@ -15,7 +15,7 @@ public class WorldTest {
         int passInHeight = 5;
         int passInWidth = 20;
 
-        World world = new World(passInWidth, passInHeight);
+        ServerWorld world = new ServerWorld(passInWidth, passInHeight);
 
         assertEquals(passInHeight, world.getHeight());
         assertEquals(passInWidth, world.getWidth());
@@ -39,7 +39,7 @@ public class WorldTest {
             throw new RuntimeException(e);
         }
 
-        World world = World.getInstance();
+        ServerWorld world = ServerWorld.getInstance();
 
         assertEquals(passInHeight, world.getHeight());
         assertEquals(passInWidth, world.getWidth());
@@ -53,7 +53,7 @@ public class WorldTest {
     public void testFailingToLoadConfiguration() {
         // This sets that the default dimensions are used if the configuration cannot find the file
         ConfigLoader configLoader = new ConfigLoader();
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         configLoader.applyConfigToWorld(world, "blah.blah.does.not.exist");
 
         assertEquals(100, world.getWidth());
@@ -62,7 +62,7 @@ public class WorldTest {
 
     @Test
     public void testAddingRobotsIncrements() {
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         assertEquals(Status.OK, world.addRobot(new Robot("Hal")));
         assertEquals(1, world.getRobots().size(), "When adding robots the array count should be updated!");
@@ -72,7 +72,7 @@ public class WorldTest {
 
     @Test
     public void testAddingObstaclesIncrements() {
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         Obstacle obstacle = new Obstacle(ObstacleType.MOUNTAIN, 0, 0, 1, 1);
 
         assertTrue(world.addObstacle(obstacle));
@@ -81,7 +81,7 @@ public class WorldTest {
 
     @Test
     public void testOverlappingObstacles() {
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         Obstacle obstacle = new Obstacle(ObstacleType.MOUNTAIN, 0, 0, 1, 1);
         Obstacle overlappingObstacle = new Obstacle(ObstacleType.PIT, obstacle.getX(), obstacle.getY(), obstacle.width(), obstacle.height());
 
@@ -92,7 +92,7 @@ public class WorldTest {
 
     @Test
     public void testAddingDuplicateRobot() {
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         assertEquals(Status.OK, world.addRobot(new Robot("Hal")));
         assertEquals(Status.ExistingName, world.addRobot(new Robot("Hal")), "Should not be able to add another robot with the same name!");
@@ -100,7 +100,7 @@ public class WorldTest {
 
     @Test
     public void testAddingRobotUsesRandomPosition() {
-        World world = new World(1000, 1000);
+        ServerWorld world = new ServerWorld(1000, 1000);
         Robot robot = new Robot("Hal");
         int initialY = robot.getY();
         int initialX = robot.getX();
@@ -112,7 +112,7 @@ public class WorldTest {
 
     @Test
     public void testRemovingRobot() {
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         assertEquals("ERROR", world.removeRobot("Hal").object.getString("result"), "Should be an error this there is no robot by this name in the world as yet");
 
@@ -125,7 +125,7 @@ public class WorldTest {
 
     @Test
     public void testFindingRobot() {
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         Robot robot = new Robot("Hal");
 
         assertEquals(Status.OK, world.addRobot(robot));
@@ -135,7 +135,7 @@ public class WorldTest {
 
     @Test
     public void testRobotsInfo() {
-        World world = new World(1000, 1000);
+        ServerWorld world = new ServerWorld(1000, 1000);
 
         assertTrue(world.getAllRobotsInfo().contains("No robots in the world."));
 
@@ -149,7 +149,7 @@ public class WorldTest {
     @Test
     public void testWorldState() {
         // A bit crude but works to ensure the robot and obstacle are included in the state
-        World world = new World(1000, 1000);
+        ServerWorld world = new ServerWorld(1000, 1000);
         Obstacle obstacle = new Obstacle(ObstacleType.MOUNTAIN, 0, 0, 1, 1);
         Robot robot = new Robot("Hal");
 

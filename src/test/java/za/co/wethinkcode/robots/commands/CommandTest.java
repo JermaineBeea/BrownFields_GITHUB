@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import za.co.wethinkcode.robots.commands.*;
 import za.co.wethinkcode.robots.server.Obstacle;
 import za.co.wethinkcode.robots.server.ObstacleType;
-import za.co.wethinkcode.robots.server.World;
+import za.co.wethinkcode.robots.server.ServerWorld;
 import za.co.wethinkcode.robots.domain.Robot;
 
 import java.awt.*;
@@ -17,11 +17,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CommandTest {
 
-    private World world;
+    private ServerWorld world;
 
     @BeforeEach
     public void setUp() {
-        world = World.getInstance();
+        world = ServerWorld.getInstance();
     }
 
         @Test
@@ -48,7 +48,7 @@ public class CommandTest {
     public void testLaunchTwoRobotsPerClientLimit() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alphatank", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
         world.execute(command, clientId, response -> {
            assertTrue(response.isOKResponse());
@@ -59,7 +59,7 @@ public class CommandTest {
     public void testLookCommand() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -77,7 +77,7 @@ public class CommandTest {
     public void testLookWithnNoRobots() {
         String clientId = "client-xyz";
         Robot robot = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.execute(new LookCommand(robot, new String[]{}), clientId, lookResponse -> {
             assertFalse(lookResponse.isOKResponse());
@@ -89,7 +89,7 @@ public class CommandTest {
     public void testSuccessfulLaunch() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -101,7 +101,7 @@ public class CommandTest {
     public void testOrientationCommand() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -122,7 +122,7 @@ public class CommandTest {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
 
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -143,7 +143,7 @@ public class CommandTest {
     public void testHandleTurnRight() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -164,7 +164,7 @@ public class CommandTest {
     public void testMoveForward() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -185,7 +185,7 @@ public class CommandTest {
     public void testMoveForwardIntoPit() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(robot1);
 
@@ -208,7 +208,7 @@ public class CommandTest {
     public void testMoveBack() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -230,7 +230,7 @@ public class CommandTest {
     public void testMoveBackIntoPit() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(robot1);
 
@@ -253,7 +253,7 @@ public class CommandTest {
     public void testStateCommand() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -274,7 +274,7 @@ public class CommandTest {
     public void testFireMisses() {
         String clientId = "client-xyz";
         Robot robot1 = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
         LaunchCommand command = new LaunchCommand(robot1, new String[]{"tank"});
 
         world.execute(command, clientId, response -> {
@@ -295,7 +295,7 @@ public class CommandTest {
         String clientId = "client-xyz";
         Robot shooter = new Robot("Alpha", "tank");
         Robot target = new Robot("Hal", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(shooter);
         world.addRobot(target);
@@ -323,7 +323,7 @@ public class CommandTest {
         String clientId = "client-xyz";
         Robot shooter = new Robot("Alpha", "sniper");
         Robot target = new Robot("Hal", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(shooter);
         world.addRobot(target);
@@ -351,7 +351,7 @@ public class CommandTest {
         String clientId = "client-xyz";
         Robot shooter = new Robot("Alpha", "tank");
         Robot target = new Robot("Hal", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(shooter);
         world.addRobot(target);
@@ -379,7 +379,7 @@ public class CommandTest {
     public void testReloading() {
         String clientId = "client-xyz";
         Robot robot = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(robot);
         int shooterInitialShots = robot.getShots();
@@ -411,7 +411,7 @@ public class CommandTest {
     public void testRepairing() {
         String clientId = "client-xyz";
         Robot robot = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(robot);
         int robotInitialShields = robot.getShields();
@@ -433,7 +433,7 @@ public class CommandTest {
     @Test
     public void testHelpCommand() {
         String clientId = "client-xyz";
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         HelpCommand helpCommand = new HelpCommand(null, null);
 
@@ -446,7 +446,7 @@ public class CommandTest {
     @Test
     public void testDumpCommand() {
         String clientId = "client-xyz";
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         DisconnectCommand disconnectCommand = new DisconnectCommand();
 
@@ -459,7 +459,7 @@ public class CommandTest {
     public void testShutdown() {
         String clientId = "client-xyz";
         Robot robot = new Robot("Alpha", "tank");
-        World world = new World(10, 10);
+        ServerWorld world = new ServerWorld(10, 10);
 
         world.addRobot(robot);
 

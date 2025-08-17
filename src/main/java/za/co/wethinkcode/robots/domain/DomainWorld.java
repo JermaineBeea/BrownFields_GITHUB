@@ -2,14 +2,14 @@ package za.co.wethinkcode.robots.domain;
 
 import java.util.List;
 
-public class World {
+public class DomainWorld {
 
     private final String name;
     private final int width;
     private final int height;
     private final List<Obstacle> obstacles;
 
-        public World(String name, int width, int height, List<Obstacle> obstacles) {
+        public DomainWorld(String name, int width, int height, List<Obstacle> obstacles) {
         this.name = name;
         this.width = width;
         this.height = height;

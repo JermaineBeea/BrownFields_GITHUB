@@ -19,11 +19,11 @@ class WorldDaoImplTest {
 
     @Test
     void testSaveAndLoadWorld() {
-        World world = new World("testworld", 10, 10,
+        DomainWorld world = new DomainWorld("testworld", 10, 10,
                 Arrays.asList(new Obstacle(1, 2, 3, 4)));
         dao.saveWorld(world);
 
-        World loaded = dao.loadWorld("testworld");
+        DomainWorld loaded = dao.loadWorld("testworld");
         assertNotNull(loaded);
         assertEquals("testworld", loaded.getName());
         assertEquals(10, loaded.getWidth());
@@ -33,7 +33,7 @@ class WorldDaoImplTest {
 
     @Test
     void testDeleteWorld() {
-        World world = new World("todelete", 5, 5,
+        DomainWorld world = new DomainWorld("todelete", 5, 5,
                 Arrays.asList(new Obstacle(0, 0, 1, 1)));
         dao.saveWorld(world);
         dao.deleteWorld("todelete");
@@ -42,11 +42,11 @@ class WorldDaoImplTest {
 
     @Test
     void testRestoreWorld() {
-        World original = new World("restoreworld", 8, 8,
+        DomainWorld original = new DomainWorld("restoreworld", 8, 8,
                 Arrays.asList(new Obstacle(2, 2, 3, 3), new Obstacle(4, 4, 5, 5)));
         dao.saveWorld(original);
 
-        World restored = dao.loadWorld("restoreworld");
+        DomainWorld restored = dao.loadWorld("restoreworld");
         assertNotNull(restored);
         assertEquals(original.getName(), restored.getName());
         assertEquals(original.getWidth(), restored.getWidth());
@@ -64,20 +64,20 @@ class WorldDaoImplTest {
 
     @Test
     void testSaveAndRestoreManyWorlds() {
-        World world1 = new World("world1", 6, 6,
+        DomainWorld world1 = new DomainWorld("world1", 6, 6,
                 Arrays.asList(new Obstacle(1, 1, 2, 2)));
-        World world2 = new World("world2", 7, 7,
+        DomainWorld world2 = new DomainWorld("world2", 7, 7,
                 Arrays.asList(new Obstacle(3, 3, 4, 4), new Obstacle(5, 5, 1, 1)));
-        World world3 = new World("world3", 9, 9,
+        DomainWorld world3 = new DomainWorld("world3", 9, 9,
                 Arrays.asList());
 
         dao.saveWorld(world1);
         dao.saveWorld(world2);
         dao.saveWorld(world3);
 
-        World loaded1 = dao.loadWorld("world1");
-        World loaded2 = dao.loadWorld("world2");
-        World loaded3 = dao.loadWorld("world3");
+        DomainWorld loaded1 = dao.loadWorld("world1");
+        DomainWorld loaded2 = dao.loadWorld("world2");
+        DomainWorld loaded3 = dao.loadWorld("world3");
 
         assertNotNull(loaded1);
         assertEquals("world1", loaded1.getName());

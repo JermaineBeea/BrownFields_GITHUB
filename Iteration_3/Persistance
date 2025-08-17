@@ -1,0 +1,434 @@
+Persistence in Java
+Work through this section on your own and then discuss as a team to ensure that everyone on the team fully understands the concepts.
+Now that you know something of relational databases and how they function, it’s time to put them to work in an application: time to access a database from within a Java programme.
+
+In this section we’ll see how to make programmatic use of a relational database.
+
+In order to use RDBMS from a Java programme, we’ll need to use a driver — a library of code — that implements the Java DataBase Connectivity API. The JDBC API is a standard collection of Java classes that enables application code to access relational databases, and is the same for all relational databases.
+
+Any relational database system we want to use must provide us with an implementation of JDBC, and this is what the driver is. Indeed, many RDBMS implementations provide a choice of several JDBC drivers; which one we use depends on just how we intend to use the database.
+
+Before we can access a database from our application code, we will need to install a suitable JDBC driver for our application to use to connect to the database. Here we’ll do it as part of the build process.
+
+At first we’ll just read and write data directly so that you can see how to use JDBC to get data in and out of a Java app. Once that’s done, we’ll take a look (in the next module) at ways to make relational data play nicer in the object-oriented world.
+
+Resources
+The Java Database Connectivity (JDBC) API Reference
+
+If you wish to dive deeper into using JDBC, the Java Tutorial on JDBC Basics is your jumping-off point.
+
+An alternative SQLite + Java tutorial.
+
+Getting started with JDBC
+JDBC is Java’s API for programming with databases. Other languages have their own implementations, libraries and frameworks for doing more or less the same tasks.
+
+There are quite a few libraries and frameworks that aid in programming for databases. In this module, you only need JDBC. Don’t get tempted and dive into that rabbit hole. For this semester, simpley focus on the fundamentals of database progroamming.
+Here’s what we want to cover in the next few steps.
+
+Test that you have all the necessary tools in place in order to write Java code that makes use of a SQLite database. You should already have SQLite installed on your PC, and optionally SQLite Browser. If you don’t already have those installed, now would be a good time to fix that.
+
+Outline the code you need to put in place in order to connect to a database — something you’ll always need to do before manipulating the data in the database.
+
+Show you how a database stands alone and can be accessed and used by multiple tools.
+
+Get a small start on manipulating a SQLite database from your Java code.
+
+Maven dependencies
+Before we dive into the Java code itself, take a look at the project POM that defines the db-connector project and its dependencies.
+
+Snippet from db-connector Project Definition
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.36.0.3</version>
+        </dependency>
+This tells the Maven build system that our code depends on a library named sqlite-jdbc made by xerial.org and the version of sqlite-jdbc we want to use.
+
+Some programming languages (and many programmers) are very slack about what versions of libraries their applications build with. We think that’s a Bad Idea.
+
+Experienced developers will tell war-stories of days and weeks lost to hunting down obscure bugs that resulted from some build that used an "incorrect" (unexpected) version of a library.
+
+Rather specify dependency versions explicitly and manage them actively as part of maintaining good code hygiene.
+
+Create a table with JDBC
+Now the code that uses JDBC to access a SQLite database:
+
+DbConnect.java
+package za.co.wethinkcode.dbtest;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+/**
+ * DbTest is a small command-line tool used to check that we can connect to a SQLite database.
+ * 
+ * By default (without any command-line arguments) it attempts to create a SQLite table in an in-memory database.
+ * If it succeeds, we assume that all the working parts we need to use SQLite databases are in place and working.
+ *
+ * The only command-line argument this app understands is
+ *  `-f <filename>`
+ *  which tells that application to create the test table in a real (disk-resident) database named by the given
+ *  filename. Note that the application _does not delete_ the named file, but leaves it in the filesystem
+ *  for later examination if desired.
+ */
+public class DbConnect
+{
+    public static final String IN_MEMORY_DB_URL = "jdbc:sqlite::memory:";
+
+    public static final String DISK_DB_URL = "jdbc:sqlite:";
+
+    public static void main( String[] args ) {
+        final DbConnect tester = new DbConnect( args );
+    }
+
+    private String dbUrl = null;
+
+    private DbConnect( String[] args ) {
+        processCmdLineArgs( args ); 
+
+        try( final Connection connection = DriverManager.getConnection( dbUrl ) ){ 
+            System.out.println( "Connected to database " );
+            runTest( connection );
+        }catch( SQLException e ){
+            System.err.println( e.getMessage() );
+        }
+    }
+
+    private void runTest( Connection connection ) {
+        try( final Statement stmt = connection.createStatement() ){
+            stmt.executeUpdate( "CREATE TABLE test( test_id, success )" );  
+            System.out.println( "Success creating test table!" );
+        }catch( SQLException e ){
+            System.err.println( e.getMessage() );
+        }
+    }
+
+    private void processCmdLineArgs( String[] args ){
+        if( args.length == 2 && args[ 0 ].equals( "-f" )){
+            dbUrl = DISK_DB_URL + args[ 1 ];
+        }else if( args.length == 0 ){
+            dbUrl = IN_MEMORY_DB_URL;
+        }else{
+            throw new RuntimeException( "Illegal command-line arguments." );    
+        }
+    }
+}
+We’ve set things up so that this tiny app can either
+Create a database in memory (the default if we don’t use any command-line options) or
+
+Create a (real) database in the filesystem (on disk) if we use the command-line option -f filename.
+
+We initialise the Connection to the database inside a try-with-resources statement. Connection is a subclass of AutoCloseable, so the connection will be automatically closed (by calling Connection.close()) in the (implicit) finally clause of the try statement.
+The executeUpdate() method is what we need to use any time we’re going to change the database.
+If we see a command-line argument we don’t recognise, we just throw our toys here. Because the RuntimeException is never caught by our code, it will cause the application to stop abruptly.
+Memory-resident databases are useful for integration testing where you want to set up a database, populate it with known data for a test and then throw it away once the test finishes, but normally you’ll want to use a real, disk-resident database file.
+The Maven POM for the connection test is set up so that it will build a standalone, executable jarfile that can be executed directly using java -jar <jarfile>. It builds the SQLite driver jarfile into the executable jarfile created during the build so that there is no need to set up the classpath or modulepath with the driver. In "real-world" use this may or may not be something you need to do in order to deploy an app using the SQLite (or any other) JDBC driver.
+Legacy JDBC Code
+Older versions of Java lacked the try-with-resources statement, so you might come across older JDBC code in the wild that looks like this:
+
+Connection connection = null;
+try{
+    connection = DriverManager.getConnection( dbUrl );
+    //...do stuff using the connection...
+}catch( SQLException eek ){
+    // do something about the fact that we couldn't
+    // connect to the database...
+}finally{
+    try{
+        if( connection != null ){
+            connection.close();
+        }
+    }catch( SQLException eek ){
+        // do something...
+    }
+}
+We think the more modern way (using try-with-resources) is much nicer. If you see old-style code in use, feel empowered to improve it if you’re using any reasonably modern version (7 or newer) of Java.
+
+Practice
+Compile (build) the DbConnect app.
+
+Run the app from the command-line _without any command-line arguments. What happens?
+
+Run the app from the command line, but this time specify the name of a database file. The test db file should not exist before you run the test. Note that the file will be created (assuming the application runs correctly.)
+
+Using sqlite from the command-line, look inside the database. What’s in there?
+
+$ sqlite3 test.db
+sqlite> .tables
+-- what do you see SQLite print here> --
+
+sqlite> .dump test
+-- what do you see SQLite print here> --
+
+sqlite> select * from test;
+-- what do you see SQLite print here> --
+Open up the database file using SQLite Browser (or whatever other database browser you might have installed) and take a look at what’s inside the database.
+
+Run the app from the command-line again, specifying exactly the same file name as you did in Task 3. What happens?
+
+How can you fix this by adding some code to the project? (Hint: You’ve already seen the necessary SQL back in the DROP TABLE lesson.)
+
+CRUD: Create, Read, Update, Delete
+You’ll need a clean copy of the example Brewery Database for the code below to work.
+The purpose of this section is to show you how to manipulate a relational database — how to run SQL commands from a Java app and get data back from the database.
+
+The key concepts/classes we’ll see are java.sql.Statement which we’ll use to send SQL instructions to the DBMS, and java.sql.ResultSet for getting data back out when we run SELECT statements.
+
+You will need to copy the source code of the example app in order to compile and run the app (along with a clean copy of the example database).The source is set up as a standalone Maven project.In the notes below we’ll only show relevant excerpts from the code in order to describe the key bits relevant to persistence.
+
+Before we dive into the code itself, it’s worth pointing out that this demo project
+
+uses exactly the same database we used in the Intro to SQL section, so you should be familiar with the database schema (table definitions, column names, etc.) and
+
+uses the same SQL statements we saw in the Intro to SQL so there’s nothing new in the SQL you’ll encounter in the code.
+
+The purpose of this example is to show you how those bits get put into Java code and made to work.
+
+The entire example consists of only one class, RecipeDbDemo which expects to be given the command-line option -f <sqlite-filename> to tell it where to find the database it will change.
+
+The application does the following:
+
+Connect to the database.
+
+CREATE some data,
+
+UPDATE some data,
+
+DELETE some data, and then (finally!)
+
+READ some data.
+
+Each of these lives in a separate method of the class. We really wanted to refactor the code into something a bit cleaner/ more DRY, but that would be sidetracking from our main purpose here, so we apologise for the repetition!
+
+We’re not really interested in realistic error handling or recovery here, only in the JDBC interface for exercising SQL databases, so anytime something goes wrong, the app just bails out via an exception.
+
+Follow along with the actual source code open in your IDE/editor.
+
+Connect to the database
+        try( Connection connection = DriverManager.getConnection( dbUrl )){ // <1>Other ways to get a Connection
+            useTheDb( connection );
+        }catch( SQLException e ){
+            throw new RuntimeException( e );
+        }
+CREATE, UPDATE and DELETE data
+We create a Connection instance that will auto-close, just as we did earlier in the DbConnect test. We’re ready to move on to the CREATE, UPDATE, DELETE methods. We’ve grouped these together for good reason: they’re all terribly similar: None of them actually retrieve any data; they simply manipulate the data in the database. Similarly, if we were to introduce SQL statements that alter the structure of the database (CREATE TABLE, DROP TABLE and friends) they’d work a lot like the code below.
+
+    private void createData( final Connection connection )
+        throws SQLException
+    {
+        try( final Statement stmt = connection.createStatement() ){ 
+            boolean gotAResultSet = stmt.execute( 
+                "INSERT INTO ingredients(name, type) VALUES (\"Munich\", \"malt\")" ); 
+            if( gotAResultSet ){
+                throw new RuntimeException( "Unexpectedly got a SQL resultset." );
+            }else{
+                final int updateCount = stmt.getUpdateCount();  
+                if( updateCount == 1 ){
+                    System.out.println( "1 row INSERTED into ingredients" );
+                }else{
+                    throw new RuntimeException( "Expected 1 row to be inserted, but got " + updateCount );
+                }
+             }
+        }
+    }
+We use the Connection instance to create a simple Statement. Statements must be closed when we’re done with them to free-up the resources they consume. The simplest way (but not always accessible for us to use) is a try-with-resources block.
+Then we execute some SQL using the Statement object. Execute returns a boolean value: true if the SQL statement returns actual data (via a ResultSet object and false if it just does an update.
+Notice that the SQL we use does not have to end with a semicolon as it does when we’re interacting with SQLite via the console.
+If the update was successful we can ask the Statement to tell us how many rows of data were updated as a result of our SQL. Here we’ve tried to add a row of data, so we expect execute to return false — we don’t expect any data back.
+We won’t repeat all the code for the UPDATE and DELETE methods — it’s in the project source and you should look through it and make sure you understand it. It looks and works exactly like the code above, save that the SQL statements executed are different.
+
+READ data
+Reading data (using a SELECT) is only slightly more complex.When we send (execute) a SELECT statement to the database using a Statement, it will return true, and we can then ask it for the data.The data gets given to us in a ResultSet object which allows us to iterate through the rows coming back from the database, one at a time, fishing out the values from each column we retrieved.
+
+    private void readData( final Connection connection )
+        throws SQLException
+    {
+        try( final Statement stmt = connection.createStatement() ){
+            boolean gotAResultSet = stmt.execute(   
+                "SELECT p.name productname, i.type, i.name ingredname, r.qty, r.units "
+                + "FROM products p, recipe_quantities r, ingredients i "
+                + "WHERE "
+                + "        productname = 'Buffalo Bay Blonde'"
+                + "    AND p.id = r.product_id "
+                + "    AND r.ingredient_id = i.id"
+            );
+            if( ! gotAResultSet ){  
+                throw new RuntimeException( "Expected a SQL resultset, but we got an update count instead!" );
+            }
+            try( ResultSet results = stmt.getResultSet() ){ 
+                int rowNo = 1;
+                while( results.next() ){
+                    final String productName = results.getString( "productname" );   
+                    final String ingredType = results.getString( "type" );
+                    final String ingredName = results.getString( "ingredname" );    
+                    final int qty = results.getInt( "qty" );
+                    final String units = results.getString( "units" );
+
+                    final StringBuilder b = new StringBuilder( "Row " ).append( rowNo ).append( SEPARATOR ) 
+                        .append( productName ).append( SEPARATOR )
+                        .append( ingredType ).append( SEPARATOR )
+                        .append( ingredName ).append( SEPARATOR )
+                        .append( qty ).append( SEPARATOR )
+                        .append( units );
+                    System.out.println( b.toString() );
+                }
+            }
+        }
+This time we expect execute to return true, indicating that there’s data for us to process. Of course we don’t know how many rows were matched by our SELECT statement…​
+Note that we want results this time.
+We know there’s data to get, so we ask the Statement (which has already executed) to give us its ResultSet. From here on we’re mainly working with that ResultSet object.
+This line and the next few are pulling out the values of each column that we asked for in our SELECT. In the example we retrieve the columns by name. You can also retrieve them by number but beware: the numbering of columns starts at 1, not 0 as everywhere else in Java! Also, the number will be wrong if ever you have to change your SELECT statement, occasionally leading to baffling bugs. The tiny amount of execution overhead involved in retrieveing data by column names is well worth the readability and error-resistance. (The names are all cached anyway; it’s quick.)
+We told you earlier that we’d avoid introducing anything new in the SQL, but we lied. We’ve introduced aliases for some of the columns in the SELECT statement. (Look carefully at the first part of the SELECT.) Previously we’ve only shown you aliases for table names; now you know that column names may also be aliased. In this code it’s necessary, otherwise we’d end up with two columns called name. Run the SELECT by hand to see what we’re talking about.
+The remainder of the method is just concerned with printing out the values of each row of data. Nothing very interesting.
+Note that we have to use different ResultSet methods to get data out, depending on the SQL datatype of the column we’re retrieving: getString for TEXT columns, getInt for INTEGER valued columns, getDate for DATE, TIME and TIMESTAMP typed columns, getFloat for FLOAT columns, and so on.(Refer to the API docs for ResultSet for the full list.) This means that we have to know how the tables in our database are defined in a bit more detail than we did before.
+
+We’re using ResultSet in it’s simplest possible mode of operation here.With care you can use them for quite a lot more:
+
+You can create a ResultSet that allows you to go backwards and foward through the rows of data at your own pleasure
+
+You can create a ResultSet that allows others to update the data contained in your ResultSet while you’re busy with it. (Here lie Dragons.)
+
+You can even arrange things so that you can update the data in the database via the ResultSet.
+
+We leave you to explore these possibilities at your own leisure and peril.
+
+The most important takeaways from the above example are:
+
+A simple Statement will either update (CREATE/UPDATE/DELETE) data and return false, in which case you might be interested in asking it how many rows were affected by the update, or
+
+it will return true and you can ask it for a ResultSet object which allows you to iterate through the rows fetched by the SELECT and then you can pick out the tiny pieces of data from the columns, one variable at a time, as long as you know the SQL datatypes of the columns you fetched.
+
+This is not the best way to retrieve data, so we’ll improve on it in the next section.
+
+OO Design Note
+Parts of the JDBC API design are, frankly, not so good.All that nonsense with execute returning a boolean before you can find out what it did…​ could have been better done. It’s a bit early in the course to delve much deeper into the subject, but it’s worth highlighting that just because something is done a particular way in an "official" API does not mean it’s actually an example worth following. Beware!
+
+More realistic CRUD
+There are (many) deficiencies in the previous example if we were to think of it as "real" or "production" code. But that is not its purpose.It’s purpose was to show you the basic sequence of how to access relational databases using JDBC (First get a Connection, ask the Connection for a Statement, then execute the Statement and ask it for its ResultSet and pick the data we need out of that.)
+
+Among the problems: We’ve hard-coded the SQL into our Java source code, especially the values we want to insert/update/select on.
+
+We could fix that using a whole bunch of (ugly) String manipulations, but the JDBC API gives us a better way: the PreparedStatement.
+
+Instead of using a simple Statment to send SQL to the database, using a PreparedStatement allows us to set up the SQL, and inject the data values we want at execute time. The full source code for the worked example below can be found here.
+
+Introducing PreparedStatement
+Let’s take a look first at an UPDATE statement — one that changes data in the db:
+
+    private void createData( final Connection connection )
+        throws SQLException
+    {
+        try( final PreparedStatement stmt = connection.prepareStatement(
+            "INSERT INTO ingredients(name, type) VALUES (?, ?)" 
+        )){
+            stmt.setString( 1, "Munich" );  
+            stmt.setString( 2, "malt" );
+            final boolean gotAResultSet = stmt.execute(); 
+
+            if( gotAResultSet ){
+                throw new RuntimeException( "Unexpectedly got a SQL resultset." );
+            }else{
+                final int updateCount = stmt.getUpdateCount();
+                if( updateCount == 1 ){
+                    System.out.println( "1 row INSERTED into ingredients" );
+                }else{
+                    throw new RuntimeException( "Expected 1 row to be inserted, but got " + updateCount );
+                }
+             }
+        }
+    }
+This is the biggest difference from the code we had before. Instead of directly coding the values of the data (or joining Strings together or anything equally nasty) we use "?" as place-holders in the SQL where we want to insert values before we execute the PreparedStatement.
+Columns are indexed starting at 1. Not 0.
+For a PreparedStatement, we just execute it without any parameters. Once again it returns a boolean telling us whether there’s data to retrieve (from a SELECT) or just an update-count (from update statements). Exactly the same as for a simple Statement.
+We insert the values using methods setString() for TEXT or VARCHAR or CHARACTER columns, setInt() for INTEGER columns, setFloat() for FLOAT columns…​ and so on. (Again, consult the JDBC API docs for the full list.) Again: You need to know the SQL datatypes of the data you’re trying to push to the database.
+
+The code for updateData() and deleteData() are entirely similar to the above, and there’s really nothing new to say about it. Review the source and make sure you understand it before moving on.
+
+Reading data with PreparedStatement
+There’s no real difference from the update statements we’ve already seen when using PreparedStatement when it comes to reading data. Just like when we used simple Statement objects to run a SELECT, we’ll expect to get a ResultSet back from the query, and we’ll have to pick out the data columns one by one.
+
+    private void readData( final Connection connection )
+        throws SQLException
+    {
+        try( final PreparedStatement stmt = connection.prepareStatement(
+            "SELECT p.name prodname, i.type, i.name ingredname, r.qty, r.units "
+            + "FROM products p, recipe_quantities r, ingredients i "
+            + "WHERE "
+            + "        p.name = ?"
+            + "    AND p.id = r.product_id "
+            + "    AND r.ingredient_id = i.id"
+        )){
+            stmt.setString( 1, "Buffalo Bay Blonde" );  
+            final boolean gotAResultSet = stmt.execute();
+
+            if( ! gotAResultSet ){
+                throw new RuntimeException( "Expected a SQL resultset, but we got an update count instead!" );
+            }
+            try( ResultSet results = stmt.getResultSet() ){ 
+                int rowNo = 1;
+                while( results.next() ){
+                    final String productName = results.getString( "prodname" );
+                    final String ingredType = results.getString( "type" );
+                    final String ingredName = results.getString( "ingredname" );
+                    final int qty = results.getInt( "qty" );
+                    final String units = results.getString( "units" );
+                    final StringBuilder b = new StringBuilder( "Row " ).append( rowNo ).append( SEPARATOR )
+                        .append( productName ).append( SEPARATOR )
+                        .append( ingredType ).append( SEPARATOR )
+                        .append( ingredName ).append( SEPARATOR )
+                        .append( qty ).append( SEPARATOR )
+                        .append( units );
+                    System.out.println( b.toString() );
+                }
+            }
+        }
+    }
+Lots of SQL; only one data parameter to inject.
+Remember that getResultSet() should only ever be called once. Also: it should be close (close()) though many developers don’t bother since the ResultSet will automatically be closed when its parent Statement / PreparedStatement gets closed. We recommend not being lazy: close it and free up the (sometimes quite considerable) resources as soon as you know you can.
+Before we call it a day with JDBC persistence, we really ought to mention why using a PreparedStatement is generally preferred over using a simple Statement, and when you might consider doing otherwise.
+
+Simple Statement use is fine when we’re going to do something simple that doesn’t involve any variable data. Things like CREATE TABLE or ALTER COLUMN, adding keys and indexes. On the other hand, when we’re going to do something with data that’s come in from "outside" our app (from a network connection, HTTP call, a form field in a GUI…​) we should never use a simple Statement, but always use a PreparedStatement.
+
+If we were to use String operations to glue together SQL from "foreign" data sources and bits of hard-coded SQL, we open our app up to what are known as SQL injection attacks — people can submit cunningly crafted "data" that’s really bits of SQL and end up corrupting our database, exfiltrating sensitive data or worse.
+
+Credit: https://xkcd.com/327/
+If we stick to using PreparedStatement for that sort of usage, we inherently protect our system and database against such attacks because data injected into a preparedStatement is never interpreted as SQL.
+
+(If you think such attacks don’t happen in "real life" we have some stories for you…​)
+
+In addition, PreparedStatement objects are (usually) pre-compiled by the JDBC driver and cached, so they’re significantly faster, especially when we’re likely to perform the same SQL statments over and over. Win.
+
+What you need to do for this goal
+Time for you to do some database access of your own by implementing the following stories.
+
+Story: Save the World
+As a RobotWorld creator, I wish to save my carefully constructed RobotWorld to a database by entering a SAVE command on the server console, So that I can use the same world with different collections of robots and on more than one occasion.
+
+Note that I do not want to save the positions and status of any robots in the world, just the size of the world and the positions and sizes of all obstacles,bottomless pits and mines. Note, too, that the database only has to store one, single world.
+
+You will need to design your own table(s) to store the data.
+
+Keep it simple. Seriously!
+Story: Restore the World
+As a huge fan of certain talented RobotWorld creators, I wish to be able to load a RobotWorld from a database created using the server’s SAVE command, by entering a RESTORE command to my server console, thus restoring a live, playable world to my server, So that I can run robots in the world stored in my vast RobotWorld database.
+
+Story: The Many-Worlds Interpretation of RobotWorld
+Alter the database schema to allow the saving and restoring of many Robot worlds, each uniquely identified by a name. You will also need to alter the SAVE and RESTORE commands to the server to specify the name of the world to SAVE/RESTORE. Consider carefully what to do if a RobotWorld admin tries to SAVE a world in the database using the same name as a world that already exists in the database. Refuse? Overwrite? Let the user choose?
+
+Do not write your database access code in-line with domain code. One of the hallmarks of good software design is to keep the domain code free of all other cruft that the application may need such as file access, network code and database access code.
+
+See Data Access Object and Repository Patterns. It may seem daunting, but it is nothing more than interfaces and their implementations (more or less). In a later iteration, you may be required to change storage from a relational database to a different kind of database. So, implementing at least one of the above patterns will put you in a better position later.
+
+Do NOT use the Java Persistence API (JPA) for any of the stories. In order to use JPA effectively, you first need to know the fundamentals of database programming. You are likely to find examples that use JPA and other frameworks in your web searches. Steer clear of these and use only the fundamentals introduced in this iteration.
+
+The stories must have acceptance tests.
+
+The data access code must have unit tests.
+
+Make sure your build is successful.
+
+There is no reference server available anymore.
+
+Introduction to SQL

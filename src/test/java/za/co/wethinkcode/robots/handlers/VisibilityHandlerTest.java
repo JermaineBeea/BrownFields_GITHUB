@@ -8,18 +8,18 @@ import za.co.wethinkcode.robots.domain.Direction;
 import za.co.wethinkcode.robots.server.Obstacle;
 import za.co.wethinkcode.robots.server.ObstacleType;
 import za.co.wethinkcode.robots.server.Response;
-import za.co.wethinkcode.robots.server.World;
+import za.co.wethinkcode.robots.server.ServerWorld;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VisibilityHandlerTest {
 
-    private World world;
+    private ServerWorld world;
     private Robot robot;
 
     @BeforeEach
     public void setUp() {
-        world = new World(10, 10);
+        world = new ServerWorld(10, 10);
         robot = new Robot("Robot", "tank", 0, 0);
         world.addRobot(robot);
         robot.setPosition(0,0);

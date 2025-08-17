@@ -86,13 +86,6 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>${version.sqlite}</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.example</groupId>
-            <artifactId>eodsql</artifactId>
-            <version>1.0</version>
-        </dependency>
-
         <dependency>
             <groupId>jakarta.persistence</groupId>
             <artifactId>jakarta.persistence-api</artifactId>

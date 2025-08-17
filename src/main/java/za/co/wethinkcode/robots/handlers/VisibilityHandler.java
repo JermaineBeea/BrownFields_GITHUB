@@ -7,7 +7,7 @@ import za.co.wethinkcode.robots.domain.Direction;
 import za.co.wethinkcode.robots.server.Obstacle;
 import za.co.wethinkcode.robots.server.ObstacleType;
 import za.co.wethinkcode.robots.server.Response;
-import za.co.wethinkcode.robots.server.World;
+import za.co.wethinkcode.robots.server.ServerWorld;
 
 import java.util.*;
 
@@ -22,9 +22,9 @@ public class VisibilityHandler {
     private final int halfWidth;
     private final int halfHeight;
     private final int maxDistance;
-    private final World world;
+    private final ServerWorld world;
 
-    public VisibilityHandler(List<Robot> robots, List<Obstacle> obstacles, int halfWidth, int halfHeight, int maxDistance, World world) {
+    public VisibilityHandler(List<Robot> robots, List<Obstacle> obstacles, int halfWidth, int halfHeight, int maxDistance, ServerWorld world) {
         this.robots = robots;
         this.obstacles = obstacles;
         this.halfWidth = halfWidth;

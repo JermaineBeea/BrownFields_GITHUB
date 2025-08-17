@@ -1,6 +1,6 @@
 package za.co.wethinkcode.robots.persistence.POJO;
 
-import za.co.wethinkcode.robots.domain.World;
+import za.co.wethinkcode.robots.domain.DomainWorld;
 import za.co.wethinkcode.robots.domain.Obstacle;
 import java.sql.*;
 import java.util.*;

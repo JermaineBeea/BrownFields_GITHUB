@@ -3,13 +3,14 @@ package za.co.wethinkcode.robots.server;
 import org.json.JSONObject;
 import java.util.*;
 
+import za.co.wethinkcode.robots.domain.DomainWorld;
 import za.co.wethinkcode.robots.domain.Position;
 import za.co.wethinkcode.robots.domain.Robot;
 import za.co.wethinkcode.robots.commands.*;
 import za.co.wethinkcode.robots.handlers.*;
 
-public class World {
-    private static final World INSTANCE = new World();
+public class ServerWorld {
+    private static final ServerWorld INSTANCE = new ServerWorld();
     private final CommandHandler commandHandler;
     private int width;
     private int height;
@@ -22,11 +23,11 @@ public class World {
     private final List<Obstacle> obstacles = new ArrayList<>();
     private final List<Robot> robots = new ArrayList<>();
 
-    public static World getInstance() {
+    public static ServerWorld getInstance() {
         return INSTANCE;
     }
 
-    public World() {
+    public ServerWorld() {
         ConfigLoader configLoader = new ConfigLoader();
         configLoader.applyConfigToWorld(this, "config.properties");
         this.commandHandler = new CommandHandler(this);
@@ -34,7 +35,7 @@ public class World {
         displayWorld();
     }
 
-    public World(int width, int height) {
+    public ServerWorld(int width, int height) {
         setDimensions(width, height);
         this.visibility = this.halfWidth;
         this.commandHandler = new CommandHandler(this);

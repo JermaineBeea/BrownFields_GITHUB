@@ -17,7 +17,7 @@ public class Server {
 
     public static void main(String[] args) {
         int portNumber;
-        World world = World.getInstance();
+        ServerWorld world = ServerWorld.getInstance();
 
         if (args.length != 1) {
             Scanner scanner = new Scanner(System.in);
@@ -49,7 +49,7 @@ public class Server {
             }
         }
     }
-    private static void startAdminConsole(World world) {
+    private static void startAdminConsole(ServerWorld world) {
         new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
             while (isRunning) {

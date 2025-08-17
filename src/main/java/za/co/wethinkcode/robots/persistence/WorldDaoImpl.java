@@ -1,6 +1,6 @@
 package za.co.wethinkcode.robots.persistence;
 
-import za.co.wethinkcode.robots.domain.World;
+import za.co.wethinkcode.robots.domain.DomainWorld;
 import za.co.wethinkcode.robots.domain.Obstacle;
 import java.sql.*;
 import java.util.*;
@@ -28,13 +28,13 @@ public class WorldDaoImpl implements WorldDao {
         }
     }
 
-        public World restoreWorld(String name) {
+        public DomainWorld restoreWorld(String name) {
         return loadWorld(name);
     }
 
 
     @Override
-    public void saveWorld(World world) {
+    public void saveWorld(DomainWorld world) {
            try (Connection conn = DriverManager.getConnection(dbUrl)) {
             conn.setAutoCommit(false);
             try (PreparedStatement worldStmt = conn.prepareStatement(
@@ -68,7 +68,7 @@ public class WorldDaoImpl implements WorldDao {
     }
 
     @Override
-    public World loadWorld(String name) {
+    public DomainWorld loadWorld(String name) {
                 try (Connection conn = DriverManager.getConnection(dbUrl)) {
             try (PreparedStatement worldStmt = conn.prepareStatement(
                     "SELECT width, height FROM worlds WHERE name = ?")) {
@@ -92,7 +92,7 @@ public class WorldDaoImpl implements WorldDao {
                             }
                         }
                     }
-                    return new World(name, width, height, obstacles);
+                    return new DomainWorld(name, width, height, obstacles);
                 }
             }
         } catch (SQLException e) {

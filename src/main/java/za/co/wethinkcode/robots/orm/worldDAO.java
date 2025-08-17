@@ -4,7 +4,7 @@ import org.hibernate.query.sqm.spi.BaseSemanticQueryWalker;
 
 import net.lemnik.eodsql.Select;
 import net.lemnik.eodsql.Update;
-import za.co.wethinkcode.robots.domain.World;
+import za.co.wethinkcode.robots.domain.DomainWorld;
 import za.co.wethinkcode.robots.persistence.POJO.WorldDO;
 
 public class worldDAO extends BaseQuery {

@@ -1,0 +1,429 @@
+Introduction to SQL
+Work through this section on your own and then discuss as a team to ensure that everyone on the team fully understands the concepts.
+Resources
+In this module we only describe the basics of SQL — enough for you to store RobotWorld data in a database. If you find SQL interesting and want to dive deeper into the world of relational databases, these links should be useful:
+
+SQLite Tutorial is a comprehensive manual of SQL as implemented by SQLite.
+
+Alternatively you may prefer the SQLBolt tutorial which is more interactive — you can try out various SQL statements in your browser — and is less specific to SQLite.
+
+We’ll be using a simple SQLite database to illustrate how SQL works. You should download a copy of the demo database and use it to try out the various SQL commands as we proceed through these notes.
+
+Introducing the Demo Database
+Get yourself a copy of the example database brewerydb.sqlite if you haven’t already done so. It’s a database (extremely simple, tiny!) for storing information about the various products produced by a small craft brewery.
+
+Here’s what the structure of the database looks like:
+
+brewerydb
+Figure 1. Entity-Relation Diagram for the Brewery Database
+The database consists of four tables.
+
+The beer_styles Table
+The styles table lists all the beer-styles we’re interested in. Every beer falls into one (and only one) style category. Some beer styles include "Pale Ale", "IPA", "Pilsner", "Stout" and so on. The names of beer styles are not terribly important. What matters is that every beer-product belongs to exactly one style category, but many products may be examples of a single style. (e.g. There are many, many "Lager" style beers.)
+
+The products Table
+Every product (row) has a unique id. This is just a number and is unique to every product. Its main use is for linking data in other tables to the product. Products also have a name (a TEXT column in our example database).
+
+The style_id field in the products table acts as the link (or relationship) that joins each product row to a row in the beer_styles table. In the Entity-Relation Diagram above, the "circle-and-crows-foot" notation on the line between the tables indicates this one-to-zero-or-more relationship between data (rows) in the two tables. It means that every row (beer product) in the products table must contain a valid, existing style_id — the value we use in the products table must correspond to a row that has that exact id in the beer_styles table.
+
+This is an example of a foreign key constraint, and the DBMS will not allow us to add/update/delete data that violates the constraint. We will not delve deeper into this topic: it’s enough to know that there’s more to learn for those who are interested.
+The ingredients Table
+The head-brewer at the brewery is interested in making sure she has sufficient supplies of all the ingredients needed to fill her production schedule, so our database keeps a track of what ingredients are needed to brew which products and how much of each ingredient a product requires.
+
+This means that there is a many-to-many relationship between products and ingredients: any one product will use one or more ingredients, and any one ingredient may be used in making many products. To represent the many-to-many relationship we introduce a join table:
+
+The recipe_quantities Table
+This little table does two jobs:
+
+it creates the many-to-many relationship between products and ingredients as we’ve talked about above, and
+
+it also records how much of a given ingredient is used to produce a batch of a particular product. One beer product might use (say) 4kg of Pale Malt, while the next product requires 7kg. So the amount of ingredient used depends on both the product and the ingredient, hence the amount (quantity) belongs in this join table, and not in either of the joined tables.
+
+Notice in the ER Diagram the link-line between the product table and the recipe-quantity table ends in the "bar-and-crows-foot". This notation indicates that every product must have _at least one` ingredient linked via the recipe-quantity table.
+
+The recipe_quantity table has a compound key consisting of both the product_id and the ingredient_id. This is the first time we’ve seen a compound key and demonstrates that keys need not be simple values. Indeed, for join tables it is essential that the table has keys that link the tables that we need to join.
+We’ll see just how this table is used shortly in the next section:
+
+Reading Data
+Download a copy of the example Brewery Database to any suitable working directory and fire-up SQLite.
+
+$ sqlite3 brewerydb.sqlite
+SQLite version 3.31.1 2020-01-27 19:55:54
+Enter ".help" for usage hints.
+sqlite>
+You might have a slightly different version of SQLite. Shouldn’t matter unless you see a version 2.xx or lower in which case you’ll need to install a newer version.
+Feel free to use a GUI SQLite database browser to look at the database, but do make sure you try out the SQL that follows by hand. Most GUI database browsers have an option to open the database in read-only mode. That’s probably a good idea while you’re just poking around to see what’s in the database.
+Before we do any actual SQL, execute the SQLite .tables directive to check that we’ve not been lying to you about the structure of the example database. You should get output as follows:
+
+sqlite> .tables
+ingredients        products           recipe_quantities  styles
+and, to make the output a bit more readable:
+
+sqlite> .headers on
+sqlite> .mode column
+sqlite> .width 8 24 8 24 8
+You can put these (and any other) meta-commands in an initialisation-file so that they’re always executed whenever you use the command-line sqlite3 tool. On Linux, ~/.sqliterc.
+Simple Selection
+The database already has a little bit of data in it — and (at last!) we’ll execute some actual SQL to read it:
+
+sqlite> select * from products;
+Note that all SQL statements must be terminated with a semicolon.
+
+The shorthand * just means, "give me the data from all of the columns in the table".
+
+You should see something like
+
+sqlite> select * from products;
+id        name              style_id
+--------  ----------------  --------
+1         Bigfoot IPA       1
+2         Lemondrop IPA     1
+3         Buffalo Bay Blon  2
+4         Dripkelders Dubb  3
+Aside
+Using select * is very useful shorthand when we’re entering SQL statements by hand, debugging SQL (or our database structure or table definitions). It does mean that you get back all the columns, including columns you’re not really interested in seeing, and that the columns are in whatever order they’re laid out in the table or however they’re joined by the DBMS. Not so great when you’re going to put SQL commands inside source code.
+
+When writing SQL embedded inside application code you should always spell out exactly which columns you wish to retrieve by name.
+
+Now try:
+
+sqlite> select style_id, name from products;
+You should only see the data from the named columns:
+
+Output of SELECT style_id, name
+sqlite> select style_id, name from products;
+styl  name
+----  ----------------
+1     Bigfoot IPA
+1     Lemondrop IPA
+2     Buffalo Bay Blon
+3     Dripkelders Dubb
+EXERCISE
+Take a look at what’s in the other tables (styles, ingredients and recipe_quantities) in the Brewery Database using SELECT statements.
+
+EXERCISE
+Run the following SQL against the example database:
+
+sqlite> select * from styles, products;
+Surprise! 😯
+sqlite> select * from styles, products;
+id        name              id        name              style_id
+--------  ----------------  --------  ----------------  --------
+1         IPA               1         Bigfoot IPA       1
+1         IPA               2         Lemondrop IPA     1
+1         IPA               3         Buffalo Bay Blon  2
+1         IPA               4         Dripkelders Dubb  3
+2         Blonde Ale        1         Bigfoot IPA       1
+2         Blonde Ale        2         Lemondrop IPA     1
+2         Blonde Ale        3         Buffalo Bay Blon  2
+2         Blonde Ale        4         Dripkelders Dubb  3
+3         Belgian Dubbel    1         Bigfoot IPA       1
+3         Belgian Dubbel    2         Lemondrop IPA     1
+3         Belgian Dubbel    3         Buffalo Bay Blon  2
+3         Belgian Dubbel    4         Dripkelders Dubb  3
+What’s going on here?
+Relational databases consider each table to be a Set (in the mathematical sense) of "tuples" (we’ve been calling them "rows" up to now). When you ask for all the tuples from more than one table, the RDBMS will give you the cross-product of the sets/tables: every row in each table will be matched with every row in every other table, exhaustively. Try running the above select with three tables, but see if you can figure out what it is likely to produce first. It’s useful to understand this underlying Set-theoretic nature of relational database systems when it comes to figuring out more complex queries across several tables.
+
+Conceptually, the select statement above defines a set of elements (items, tuples, records) that contains all the elements in the set of products and styles.
+
+Select statement as a Set theoretic operation
+select set theory
+
+Select Specific Rows: The WHERE Clause
+Usually we don’t want to fetch all the rows in a table; we’re only interested in rows matching specific selection criteria.
+
+sqlite> select * from products where name = "Bigfoot IPA";
+gives us…​
+id        name              style_id
+--------  ----------------  --------
+1         Bigfoot IPA       1
+Here’s another example:
+
+sqlite> select * from products where style_id = 2;
+id        name                      style_id
+--------  ------------------------  --------
+3         Buffalo Bay Blonde        2
+5         Western Heads Blonde      2
+And another, introducing the frequently useful LIKE operator (% acts as a wild-card match):
+
+sqlite> SELECT * FROM products
+            WHERE name LIKE "%IPA%";
+id        name                      style_id
+--------  ------------------------  --------
+1         Bigfoot IPA               1
+2         Lemondrop IPA             1
+The where clause gives a subset of the table
+select where set theory
+
+Selecting Data Across Several Tables
+One-to-Many Join
+Let’s ask the question, "What are all the products in the 'Blonde Ale' style category?"
+
+SELECT
+    products.id, products.name, styles.name    
+FROM
+    products, styles   
+WHERE
+        products.style_id = styles.id   
+    AND styles.name LIKE '%Blonde%';
+We specify exactly which columns we want to see…​
+…​from the products and the styles tables.
+This is the critical part of the SELECT: If we execute this SELECT statement but leave out the WHERE clause (try it!) we’ll just get the cross-product of the two tables (as we saw earlier). The WHERE clause chops out all the rows of that cross-product that we don’t want by saying, "Only give me rows where the style-name contains 'Blonde' AND THEN, of the rows that remain, only give me the rows where product.style_id matches the `style.id`". This equality-test is the one-to-many join.
+We get the result-set
+
+id        name                      name
+--------  ------------------------  ----------------
+3         Buffalo Bay Blonde        Blonde Ale
+5         Western Heads Blonde      Blonde Ale
+One could visualise this operation as follows:
+
+A one-to-many join in set form
+one to many set
+
+Aliases
+We can make the above SELECT statement a bit shorter (save ourselves a bit of typing, more importantly make the thing a little more readable):
+
+SELECT
+    p.id, p.name, s.name
+FROM
+    products p, 
+    styles s
+WHERE
+        p.style_id = s.id
+    AND s.name LIKE '%Blonde%';
+We’re allowed to introduce a temporary alias for the table name. The aliases only last as long as the SELECT statement, but you can probably see how they make long SQL statements involving several tables more readable. We’ll show you more of them shortly.
+Another one-to-many join:
+
+SELECT p.name, s.name
+    FROM products p, styles s
+    WHERE p.style_id = s.id AND s.name NOT LIKE '%IPA%';
+to answer the whiny customer who complains, "I don’t like IPAs. Show me the beers you have that aren’t IPAs…​"
+
+name      name
+--------  ------------------------
+Buffalo   Blonde Ale
+Dripkeld  Belgian Dubbel
+Western   Blonde Ale
+Last one-to-many example. Let’s answer the question, "How many Blonde Ales does this brewery produce?"
+
+SELECT COUNT(*)
+    FROM products p, styles s
+    WHERE p.style_id = s.id AND s.name = 'Blonde Ale';
+Run this one yourself to see the output.
+
+Many-to-Many JOIN
+Our head brewer asks the question, "What ingredients do I need to brew a batch of Buffalo Bay Blonde?"
+
+The query is quite similar to what we wrote before, except that we need to use the additional Join Table (recipe_quantities) that sits between products and ingredients:
+
+SELECT p.id, p.name, ing.type, ing.name
+FROM products p, recipe_quantities rq, ingredients ing 
+WHERE
+        p.name = 'Buffalo Bay Blonde'
+    AND p.id = rq.product_id
+    AND rq.ingredient_id = ing.id;
+Aliases can be longer than just one character!
+And Lo! we get the answer:
+
+id          name                type        name
+----------  ------------------  ----------  ----------
+3           Buffalo Bay Blonde  malt        Pale Ale
+3           Buffalo Bay Blonde  malt        Cara Clair
+3           Buffalo Bay Blonde  hop         Summit
+3           Buffalo Bay Blonde  hop         Saaz
+"Oh, no!" exclaims the head brewer, "I really need to know how much of each ingredient I’ll need to order…​"
+
+"No problem," we reply, rushing back to our SQLite console:
+
+SELECT p.id, p.name, ing.type, ing.name, rq.qty, rq.units
+FROM products p, recipe_quantities rq, ingredients ing
+WHERE
+        p.name = 'Buffalo Bay Blonde'
+    AND p.id = rq.product_id
+    AND rq.ingredient_id = ing.id;
+giving
+
+id  name                      type  name              qty     unit
+--  ------------------------  ----  ----------------  ------  ----
+3   Buffalo Bay Blonde        malt  Pale Ale          4500    g
+3   Buffalo Bay Blonde        malt  Cara Clair        500     g
+3   Buffalo Bay Blonde        hop   Summit            10      g
+3   Buffalo Bay Blonde        hop   Saaz              35      kiss
+There’s plenty more to learn about joining tables and selecting data, but this is as far as we need to go for the enhancements you’ll be making to RobotWorld. Dive into the resources listed if you find relational databases interesting and think you might want to become a SQL Guru.
+Sorting Data
+Recall the list of beer styles:
+
+sqlite> select * from styles;
+id    name
+----  ------------------------
+1     IPA
+2     Blonde Ale
+3     Belgian Dubbel
+What if we want to list those in alphabetical order? Quite easily done:
+
+SELECT * FROM styles
+    ORDER BY name;
+id    name
+----  ------------------------
+3     Belgian Dubbel
+2     Blonde Ale
+1     IPA
+(You didn’t think we’d introduce something that couldn’t be done, did you?)
+
+We could also specify ORDER BY name DESC for sorting in descending order:
+
+SELECT p.name, i.name, i.type, qty, units
+    FROM products p, recipe_quantities q, ingredients i
+    WHERE p.id = q.product_id AND i.id = q.ingredient_id
+        AND i.type = 'hop'
+        AND p.name IN ('Bigfoot IPA', 'Buffalo Bay Blonde')
+    ORDER BY qty DESC;
+name              name      type  qty    units
+----------------  --------  ----  -----  ------
+Bigfoot IPA       Columbus  hop   65     g
+Bigfoot IPA       Simcoe    hop   40     g
+Buffalo Bay Blon  Saaz      hop   35     kiss
+Buffalo Bay Blon  Summit    hop   10     g
+Creating and Deleting Tables
+Up to now we’ve been working with tables that were already defined for us, without knowing very much about how they were defined. Time to fill in those gaps.
+
+Create a Table
+Let’s say that we want to expand our Brewery Database: In addition to keeping track of production-related data, our management also want to start tracking sales data. (Can’t think why…​ 🙄)
+
+The situation is this: We already keep a table of products, but we sell those products in a variety of different packages. Some we sell in 440ml bottles, some we sell in 750ml bottles, and some we sell in 20L kegs.
+
+Clearly we’ll need a package table!
+
+package table def
+CREATE TABLE "package" (
+	"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	"type"	TEXT NOT NULL, 
+	"volume"	INTEGER NOT NULL 
+);
+The package type will be one of "bottle" or "keg". We leave it open for future enhancements like "swimming-pool"…​
+volume is the quantity of beer required to fill a package in millilitres. We might have chose litres (or something else) but then we’d have to change the datatype of the column to DECIMAL, FLOAT or REAL.
+Remember that a table’s primary key need not be just one single column/value. It might be made up of two or even more columns. Here’s the table definition for the recipe_quantities table:
+
+CREATE TABLE recipe_quantities (
+	product_id	INTEGER NOT NULL,
+	ingredient_id	INTEGER NOT NULL,
+	qty	INTEGER NOT NULL,
+	units	TEXT NOT NULL,
+	PRIMARY KEY (product_id, ingredient_id)
+);
+Drop a Table
+The only time you should really need to get rid of a table altogether would be during testing where you’re creating and deleting tables and data over and over.
+
+DROP TABLE package;
+or, slightly safer
+
+DROP TABLE IF EXISTS package_price;
+Practice
+Create the package table. Add a few rows to the table.
+
+So far we have nothing joining products to packages. Create a table that joins the two, and also keeps a unit_price — the price (in cents!) of each product in a particular package.
+
+Writing Data
+Insert New Data into Tables
+Now the question of how to get data into a table in the first place! This calls for the SQL INSERT statement, and you’ll be relieved to know that INSERT is a whole lot simpler than SELECT.
+
+INSERT INTO table (column1, column2,...)
+VALUES (value1, value2,...);
+The simplest example:
+
+INSERT INTO ingredients (name, type)
+    VALUES ("Munich", "malt");
+after which the table looks like:
+
+sqlite> SELECT * FROM ingredients;
+id    name                      type
+----  ------------------------  ----
+1     Pale Ale                  malt
+2     Pilsner                   malt
+3     Cara Gold                 malt
+4     Crystal                   malt
+5     Cara Clair                malt
+6     Columbus                  hop
+7     Simcoe                    hop
+8     Southern Passion          hop
+9     Lemon Drop                hop
+10    Summit                    hop
+11    Saaz                      hop
+12    S-04                      yeas
+13    Munich                    malt
+where you can see the row we added.
+
+Notice that we did not have to specify the id value of the new row. That’s because, when the table was created, we specified that the id column is
+
+the PRIMARY KEY for the table, so is implicitly NOT NULL
+
+an INTEGER value
+
+that will AUTOINCREMENT
+
+so a new id value was auto-generated for us when we added the "Munich malt" row. If we wanted, we could specify an id explicitly, but then we must be sure we’re following all the rules.
+
+Try the following:
+
+INSERT INTO ingredients (id, name, type)
+    VALUES (10, "Munich", "malt");
+You’ll get an error: UNIQUE constraint failed: ingredients.id and the table will not be changed. You’ll get similar results if you try to insert data of the wrong type into a column or try to add a NULL value where nulls are not allowed. Try it!
+
+We can also insert more than one row at a time:
+
+INSERT INTO ingredients (id, name, type)
+    VALUES ("Munich", "malt"),
+           ("Vienna", "malt"),
+           ("Amarillo", "hop"),
+           ("Windsor", "yeast");
+Mainly this is useful when entering data by hand (e.g. for test data); programmatically we’re much more likely to add one row at a time.
+
+Updating Existing Data
+Our head-brewer changes the name of a product from "Lemondrop IPA" to "Sourflat IPA". We need to update the product name:
+
+UPDATE products
+    SET name = "Sourflat IPA"
+    WHERE name = "Lemondrop IPA";
+and SQLite silently updates the relevant row in the products table. Of course we could also have used
+
+UPDATE products
+    SET name = "Sourflat IPA"
+    WHERE id = 2;
+if we knew the id of the product ahead of time. This would have been safer: a more complex table might have more than one row with the name column set to "Lemondrop IPA", in which case all of those rows would have been updated. Or perhaps that’s what we wanted…​? It all depends…​
+
+Deleting Data
+Evidently the "Sourflat IPA" product proved to be not-so-popular. (Surprised?) So our marketing guru has decided to drop the product from the brewery’s lineup:
+
+DELETE FROM products
+    WHERE id = 2;
+Simple enough. BUT what has happened to all those other places where product_id = 2 occurs in our database? Check out the recipe_quantities table. Product 2 is still referenced in there.
+
+Oops! We have rows in the recipe_quantities table referring to a product that doesn’t exist in the products table. Not so good!
+
+If we had set up a FOREIGN KEY constraint, telling the DBMS that the product_id field in the recipe_quantities table is actually also a key in the products table, it would have taken some action when we tried to delete product 2:
+
+If we’d specified the foreign-key action as CASCADE, the DBMS would have automatically deleted all the rows in recipe_quantities that refer to product_id 2. (And that might, in turn, result in deleting rows from yet more tables if there were more foreign-key constraints in place. Beware! Remember that our example db is an extremely simple toy.)
+
+Alternatively, we might have set the constraint to RESTRICT, in which case we would have been handed an error when we try to do the delete, and the product would not be deleted
+
+Other possibilities are that the product_id could be set to NULL or to the DEFAULT value for that column.
+
+All of this can only be set up when the table gets created. You can see why we didn’t want to delve too deeply into foreign-key constraints. And anyway, SQLite does not enforce Foreign-key constraints unless you explicity switch it on (to maintain compatibility with how earlier versions of SQLite worked).
+
+And Anyway…​
+In large-scale applications ("enterprise" apps) it would be quite unusual for an application to delete data from the database. Deletions are usually a bulk operation run at intervals by database administrators in line with company data-retention policies.
+
+Consider the example SQL above where we deleted "Sourflat IPA" from the products table. In an enterprise database we would almost certainly never delete that row of data. Instead the products table would likely have a column named active or discontinued or something along those lines to mark which products are actively offered vs. those that were historically offered but are now discontinued and should not be (e.g.) listed in application UIs.
+
+Really deleting data from tables is mostly useful in apps that use embedded databases for storage — so mostly desktop and mobile apps.
+
+Practice
+Add a couple of rows to the products table and give them all the same name. Then update the name to something new and check out the result.
+
+The recipe for the "Bigfoot IPA" product calls for 65g of "Columbus hop". The head brewer has changed her recipe to make Bigfoot even more bitter and it now uses 75g. Update the database to reflect the new reality. Confirm your change with a SELECT statement.
+
+Relational Databases
+Persistence in Java
+© 2024 WeThinkCode_, All Rights Reserved.
+
+Reuse by explicit written permission only.

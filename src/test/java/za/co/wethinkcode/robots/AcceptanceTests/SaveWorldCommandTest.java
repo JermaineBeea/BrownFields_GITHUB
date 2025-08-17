@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import za.co.wethinkcode.robots.commands.SaveWorldCommand;
-import za.co.wethinkcode.robots.domain.World;
+import za.co.wethinkcode.robots.domain.DomainWorld;
 import za.co.wethinkcode.robots.persistence.WorldDao;
 
 public class SaveWorldCommandTest {
@@ -29,7 +29,7 @@ public class SaveWorldCommandTest {
  @Test
     public void testExecuteSavesWorldAndPrintsMessage() {
         // Arrange
-        World mockWorld = mock(World.class);
+        DomainWorld mockWorld = mock(DomainWorld.class);
         when(mockWorld.getName()).thenReturn("TestWorld");
 
         // Capture System.out

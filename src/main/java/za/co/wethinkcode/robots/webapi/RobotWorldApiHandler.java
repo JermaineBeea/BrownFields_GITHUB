@@ -2,7 +2,7 @@ package za.co.wethinkcode.robots.webapi;
 
 import io.javalin.http.Context;
 import io.javalin.http.HttpCode;
-import za.co.wethinkcode.robots.domain.World;
+import za.co.wethinkcode.robots.domain.DomainWorld;
 import za.co.wethinkcode.robots.persistence.WorldDaoImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
@@ -13,7 +13,7 @@ public class RobotWorldApiHandler {
 
    public static void getCurrentWorld(Context ctx) {
         // Replace with actual logic to get the current world
-        World world = dao.restoreWorld("default");
+        DomainWorld world = dao.restoreWorld("default");
         if (world == null) {
             ctx.status(HttpCode.NOT_FOUND).result("World not found");
         } else {
@@ -22,7 +22,7 @@ public class RobotWorldApiHandler {
     }
     public static void getNamedWorld(Context ctx) {
         String name = ctx.pathParam("name");
-        World world = dao.restoreWorld(name);
+        DomainWorld world = dao.restoreWorld(name);
         if (world == null) {
             ctx.status(HttpCode.NOT_FOUND).result("World not found");
         } else {

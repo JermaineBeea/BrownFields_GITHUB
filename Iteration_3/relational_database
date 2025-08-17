@@ -1,0 +1,201 @@
+Relational Databases
+Work through this section on your own and then discuss as a team to ensure that everyone on the team fully understands the concepts.
+What problems are we trying to solve?
+In the programs that you have written so far, you used variables to reference data stored somewhere in memory. When the program ended, the data is discarded. The next time you run the program, new data is created from scratch. What if we want the program to reuse data from the last time it was executed?
+
+This is a very common problem. Think about online banking for a moment. You log in to your bank’s website. You can check your account balance, make payments, buy airtime, etc. Then you close your browser and later log in again and the previous transactions are still accessible.
+
+Then there is another problem lurking beneath the surface. We need to ensure that every bit of data is written and read consistently by all programs that are using that data. With the online banking example, you would not be happy if two people paid you and one payment overwrote the other and you end up with just one payment.
+
+We can solve the matter of storing the data long after the program has executed, and we can ensure that no data is lost or corrupted. However, we have another potentially costly programming challenge. We could be writing different programs in various languages that all need to access the same data. Is there a way to describe the structure of the data and how to access it, regardless of programming language?
+
+When you read about databases, you will frequently come across the words persist, persistent and persistence. Generally speaking, we say that a program persists its data in a database. This means that a program can read and write data to some kind of permanent storage accessible to the program so that data outlives the runtime life of any single application that uses or manipulates the data.
+
+What have we uncovered so far?
+Most applications need to store data somewhere. Persistent data stores enable data to live longer than the run-time of any single application that produces or uses that data. Moreover, storing data in a structure that is independent of any single application makes it easier for several applications to work on the same data. The data can be used in different ways while avoiding any need for different applications to cooperate with one another or even know of each others' existence.
+
+Data can be created by one application and stored in a database, then the application can stop executing, and the machine it ran on can be sent for recycling. As long as the database still exists intact, a new application can come along and make use of the data created by the now-dead application.
+
+While this is highly desirable, it does introduce a few problems.
+
+Our programs should not care about where and how the data resides.
+
+Our programs must not "corrupt" the data, no matter how many users or programs are reading and writing data concurrently.
+
+All our programs should, more or less, use a consistent, independent way of persisting data regardless of the programming language.
+
+The Role and Use of the RDBMS
+There are many ways to persist data and different kinds of databases too.
+
+data files
+
+graph databases
+
+key-value stores
+
+non-relational (NoSQL) datastores
+
+tuple spaces
+
+relational databases
+
+All have their place in the design of software systems, serving different purposes and involving different tradeoffs, costs and advantages. The last one, relational databases — more formally: Relational Database Management Systems or RDBMSs — are one of the most common and widely used persistence mechanisms, and are the sole focus of this iteration.
+
+RDBM systems come in a broad range of sizes and flavours. They can handle large-scale, multi-user, multi-application implementations that replicate their data across many servers to ensure that data remains accessible even in the face of machine failures, load-shedding and network outages. Large-scale examples include products like DB2, Oracle DB, PostgreSQL and MariaDB, all of which get deployed as client/server systems.
+
+There are also small, embedded RDBMSs optimised for use in standalone, single-user applications like desktop or mobile apps. At the other end of the scale we find implementations like DerbyDB (an RDBMS implemented in pure Java, so well suited for standalone Java apps), HSQLDB and SQLite, which is the one we’ll be using to add persistence to the Robot Worlds and to learn about relational data management.
+
+No matter what purpose an RDBMS is optimised for, they all use a (mostly) common language — Structured Query Language, or SQL — to manage the database, add, change and retrieve data. The original idea was that SQL should be One True Standard, and exactly the same in every RDBMS. Sadly, and unsurprisingly, every relational database system has its own unique SQL dialect. Fortunately the differences are mostly related to proprietary extensions to the DBMS, so for the purpose of getting started with SQL we can pretend that all SQL is the same.
+
+Credit: https://xkcd.com/927/
+As far as possible, we’ll only make use of standard SQL in this module.
+
+An RDBMS addresses our problems quite well.
+
+Our programs should not care about where and how the data resides.
+
+Our programs will connect to an RDBMS, and the RDMBS will take care of where the data is stored.
+
+Our programs must not "corrupt" the data, no matter how many users or programs are reading and writing data concurrently.
+
+The RDBMS takes care of concurrency and ensures that no data is lost or corrupted …​ as long as you honor the rules of the RDBMS.
+
+All our programs should, more or less, use a consistent, independent way of persisting data regardless of the programming language.
+
+We will use SQL to define our data structure and to read and write data. Our programs will send SQL commands (a.k.a. statements) to the RDBMS to execute on our behalf.
+
+A Few RDBMS Concepts
+Content-based Addressing
+This tackles the first problem: we should not care where the data resides and how it must be accessed.
+
+Most of the time we’re used to using location-based addressing to reach data: some way of telling applications (and people!) where the data resides. Examples are
+
+A file named /usr/share/games/fortunes tells us where to look for the data used by the fortune programme.
+
+https://news.ycombinator.com/ tells us where our browser can go to load some news articles.
+
+In contrast to this, relational databases use content based addressing: they fetch (add, change) data based on what the data looks (something) like. For example
+
+Get me all the products that have a name starting with M
+
+Delete all products whose expiry-date is in the past
+
+Get me all robots that have fallen down a bottomless pit
+
+We don’t know (and don’t care!) where or how that data is stored. All we care about is what the data looks like, and, as long as we describe it in enough detail, the RDBMS will give us what we’re looking for.
+
+Tables
+Before we can tackle how to access the data in a consistent way, we need to understand how data is stored.
+
+All data in an RDBMS are stored in tables. A table defines the structure of a single data-item, or record or row. Similar to how an object encapsulates a single concept in an object oriented program, a table should store data related to only one kind of thing.
+
+For example, let us say we want to store books (maybe for an online store). A book has a title, an author and the format of the book, and for convenience we give it a unique number so we can easily identify it.
+
+conceptual table
+A database for a small, standalone system may contain only a few tables, while a database used in large enterprise systems will typically contain hundreds to thousands of tables.
+
+Columns
+A single table is defined by the columns in the table. Each column stores a single item of data — e.g. a title, an author, a date — and the collection of columns constitutes the table definition. This just defines what is stored in the table but it does not store the data itself. This is similar to properties of a class - the class does not store data but the objects created from the class carry the data.
+
+conceptual column
+Some columns may (frequently do!) have some restrictions placed on what values may be stored in the column. For example, a table definition may declare constraints like:
+
+this column may not contain NULL values — i.e. every record must have a real value filled in the column
+
+the value in this column is automatically generated when a new record is created
+
+Remember that data in a table must be uniquely identifiable. We use a constraint known as the primary key constraint to specify that the value in that column must be unique in the table: No two rows of data may contain the same value in this column. It is very common for tables to define the primary-key column as the id column (or some similar name).
+
+As we’ll see a little later, a primary-key is not always just one single column, but can be made up of the combined values in more than one column. As long as the column or combination uniquely identifies every row of data, it’s a candidate for acting as the primary key.
+We’ll see more examples of defining constraints on columns later on, and the use of constraints will become clearer. For now the important thing is that a table definition consists of:
+
+the set of columns in the table,
+
+the type of the data we store in each column,
+
+any constraints on the values we put into each column, and
+
+the columns that make up the primary keys that uniquely identify a record/row in the table.
+
+Rows
+Data in a table is kept in rows. Every row in a table represents a single data item (or record; they mean exactly the same thing, and we’ll use the two terms interchangeably) and all rows of data have identical structure (defined by the columns).
+
+conceptual row
+For example, using the previous Books table definition, we might end up with a table that contains data such as this.
+
+conceptual data
+Note that, unlike columns, the rows of data in a table have no name — not even row numbers [1]. Data is retrieved by value, remember?
+
+Also notice that we make no assumption about the order of the rows in the table. It is possible to force a table to store data in a specific order, but that is an optimisation to read data more quickly. For those that are interested, you can research database indexes.
+
+Relations
+So far all we’ve seen are examples of very simple data where all the data is stored in single table. In even the simplest of systems, though, we will need to represent and store much more complex data; data items that relate to each other in various ways.
+
+Even with our simple example of a Books table, we can easily run into complications.
+
+conceptual two authors
+The Format of the book should be limited to Hardcover, Softcover and Kindle. Anything else should be considered as an error in the data.
+
+A single author might have written several books.
+
+A book may be written by two authors but the Author column only caters for a single author.
+
+Fortunately, we can rely on the R in RDBMS - Relational (or relations). Let’s see how relations in a database can help reduce the complexity that we encountered.
+
+One-to-Many Relationships
+Let’s assume that a Book is only available in a single Format. However, there can be many books for a single format. We can say that a book has one format and a format has many books.
+
+This is known as a one to many relationship. Let’s change our database to take advantage of this relationship.
+
+Firstly, let’s store the Format in a separate table. We introduce a Code column that will uniquely identify each format. The Code column is constrained as the primary key. It’s simpler to just say The primary key of the Format table is the Code column.
+
+Remember that we must be able to uniquely identify every row in a table; and a table cannot have duplicate values in its primary key column.
+
+Now we have two tables; each having their own primary keys: ID on the Books table, and Code on the Format table.
+
+conceptual format
+Then, instead of storing the name of the Format in the Books table, we can simply store the Code from the Format table.
+
+conceptual 1 to m
+Every time we add a row to the Book table, we have to make sure that the value for the Format Code column must have a corresponding row in the Format table identified by Code. Format Code, therefore, represents values of another table’s primary key. We say that Format Code has a foreign key constraint, or simply that it is the foreign key of the Format table.
+
+Many-to-Many Relationships
+Let’s apply the one-to-many relationship to handle authors. We can say that one author can write many books. This means we should create an Authors table:
+
+conceptual m to m part1
+Great! Now, let’s constrain the Author column on Books and to be the foreign key of the Authors table.
+
+conceptual m to m part2
+Oops! A column cannot have multiple values! Our database is wrong because any one author can write many books and any one book can be written by many authors. This is a many to many relationship. It’s not possible to introduce many to many constraints on columns, for the exact reason that we can see in the example above.
+
+Fortunately, there is a way out by using one to many relationships. We can rephrase the many to many relationship as a single author can write many books (the first one to many relationship) and any single book can be written by many authors (the second one to many relationship). This is achieved by introducing a new table BooksAndAuthors that contains the primary key of both tables as foreign keys.
+
+conceptual m to m part3
+Notice also that the Books table no longer needs the Author column.
+
+What is the primary key for the BooksAndAuthors table?
+
+Think about the answer and discusss this in your team.
+
+Visualising Database Designs
+It’s quite painful drawing database designs like we have so far. To address this, there is a notation known as Entity Relationship Diagrams or ERD for short.
+
+Tables are drawn as boxes with a title and list of columns. The columns also specify their type and significant constraints. Then relationships are drawn as lines between the tables (the boxes). The lines are annotated with a description of the the relationship and the start and end of the lines indicate whether it is the one or many side of the relationship.
+
+Here’s the same database drawn as an ERD:
+
+conceptual erd
+The database design above relaxes many of the formal rules of ERDs. This kind of lightweight sketch is good enough for collaboration. There are also sophisticated tools that formalise and honour the rules of ERDs and database designs. We find that lightweight sketches are more valuable because the database design evolves as we work iteratively. In Intro to SQL you will be introduced to Structure Query Language which is used to define your database in a textual form.
+
+Naming Conventions
+You’ll notice that our books table above is named with lower-case (small) letters as are the column names, and that we’ve put the column constraints in UPPER-CASE (capital) letters. This is merely convention. SQL is not a case-sensitive language, and doesn’t care whether you use small letters or capitals, but this seems to be the way most people write SQL, at least when they’re writing table definitions or putting SQL inside application source-code.
+
+Where we want names of tables or columns to contain more than one word, we use underscore characters to separate the words. (Only letters, digits and underscores [2] may be used for table and column names, as long as the first character in the name is a letter.)
+
+1. This is also a lie. Sort of. Some relational databases do allow you to ask for "row 42" from a table, but this is not Standard SQL and is a pretty poor way to get data out of a relational table anyway.
+2. This is a lie. Strictly speaking the SQL standard does allow spaces in names, but only by enclosing the name in double-quotes. It’s ugly, and different database implementations differ in how they handle it. So do we really want to go there?
+Relational Databases
+Introduction to SQL
+© 2024 WeThinkCode_, All Rights Reserved.
+
+Reuse by explicit written permission only.

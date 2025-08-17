@@ -8,6 +8,9 @@ import za.co.wethinkcode.robots.server.*;
 import za.co.wethinkcode.robots.commands.*;
 import za.co.wethinkcode.robots.domain.Robot;
 import za.co.wethinkcode.robots.handlers.VisibilityHandler;
+import za.co.wethinkcode.robots.server.ServerWorld;
+import za.co.wethinkcode.robots.domain.DomainWorld;
+
 
 import java.util.*;
 
@@ -17,11 +20,13 @@ public class CommandHandler {
         void onComplete(Response response);
     }
 
-    private final World world;
+    private final ServerWorld world;
+    private  DomainWorld domainWorld;
+
     private final Map<String, HashMap<String, String>> clientRobots = new HashMap<>();
     private final VisibilityHandler visibilityHandler;
 
-    public CommandHandler(World world) {
+    public CommandHandler(ServerWorld world) {
         this.world = world;
         this.visibilityHandler = new VisibilityHandler(
                 world.getRobots(),
@@ -36,7 +41,7 @@ public class CommandHandler {
     public void handle(Command command, String clientId, CompletionHandler handler) {
         System.out.println("Executing command: " + command.commandName());
 
-        switch (command) {
+           switch (command) {
             case HelpCommand helpCommand -> handleHelp(helpCommand, handler);
             case LaunchCommand launchCommand -> handleLaunch(launchCommand, clientId, handler);
             case StateCommand stateCommand -> handleState(stateCommand, command.robot.getName(), handler);
@@ -49,7 +54,33 @@ public class CommandHandler {
             case FireCommand ignored -> handleFire(command.robot, handler);
             case ReloadCommand reloadCommand -> handleReload(reloadCommand, handler);
             case RepairCommand repairCommand -> handleRepair(repairCommand, handler);
+            case SaveWorldCommand saveWorldCommand -> handleSaveWorld(saveWorldCommand, handler);
+            case RestoreWorldCommand restoreWorldCommand -> handleRestoreWorld(restoreWorldCommand, handler);
             default -> handler.onComplete(new Response("ERROR", "Unsupported command"));
+        }
+
+    }
+
+        private void handleSaveWorld(SaveWorldCommand command, CompletionHandler handler) {
+          
+        try {
+            command.execute(domainWorld);
+            handler.onComplete(new Response("OK", "World saved successfully."));
+        } catch (Exception e) {
+            handler.onComplete(new Response("ERROR", "Failed to save world: " + e.getMessage()));
+        }
+    }
+
+    private void handleRestoreWorld(RestoreWorldCommand command, CompletionHandler handler) {
+        try {
+            DomainWorld restored = command.execute(null);
+            if (restored != null) {
+                handler.onComplete(new Response("OK", "World restored successfully."));
+            } else {
+                handler.onComplete(new Response("ERROR", "World not found."));
+            }
+        } catch (Exception e) {
+            handler.onComplete(new Response("ERROR", "Failed to restore world: " + e.getMessage()));
         }
     }
 

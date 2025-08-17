@@ -9,7 +9,7 @@ import java.lang.Runnable;
 import org.json.JSONObject;
 import org.json.JSONException;
 // ...existing code...
-import za.co.wethinkcode.robots.server.World; // <-- Change this line
+import za.co.wethinkcode.robots.server.ServerWorld; // <-- Change this line
 // ...existing code...
 import za.co.wethinkcode.robots.commands.*;
 
@@ -19,10 +19,10 @@ import za.co.wethinkcode.robots.commands.*;
  */
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-    private final World world;
+    private final ServerWorld world;
     private final CommandHandler commandHandler; // CommandHandler for processing commands
 
-    public ClientHandler(Socket socket, World world) {
+    public ClientHandler(Socket socket, ServerWorld world) {
         this.clientSocket = socket;
         this.world = world;
         this.commandHandler = new CommandHandler(world); // Initialize CommandHandler
